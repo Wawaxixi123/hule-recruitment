@@ -1,13 +1,13 @@
 /**
- * AppLayout - Main application layout with sidebar + topbar
- * Design: White sidebar, indigo active states, clean topbar
+ * AppLayout - Main application layout with sidebar + topbar + AI Copilot
+ * Design: White sidebar, indigo active states, clean topbar, global AI Copilot panel
  */
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import {
   LayoutDashboard, Briefcase, Users, Calendar, Zap,
   BarChart3, Settings, Brain, ChevronLeft, ChevronRight,
-  Bell, Search, LogOut, ChevronDown, Menu
+  Bell, Search, LogOut, ChevronDown, Menu, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { AICopilot, CopilotTrigger } from "./AICopilot";
 
 const navItems = [
   { icon: LayoutDashboard, label: "工作台", path: "/dashboard" },
@@ -42,6 +43,8 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [copilotOpen, setCopilotOpen] = useState(false);
+  const [copilotExpanded, setCopilotExpanded] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -103,6 +106,22 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
           );
         })}
       </nav>
+
+      {/* AI Copilot shortcut in sidebar */}
+      {!collapsed && (
+        <div className="px-3 pb-2">
+          <button
+            onClick={() => setCopilotOpen(true)}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium bg-gradient-to-r from-indigo-50 to-cyan-50 border border-indigo-100 text-indigo-700 hover:from-indigo-100 hover:to-cyan-100 transition-all"
+          >
+            <div className="w-5 h-5 rounded-lg bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-3 h-3 text-white" />
+            </div>
+            <span>AI Copilot</span>
+            <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          </button>
+        </div>
+      )}
 
       {/* User section */}
       {!collapsed && user && (
@@ -169,7 +188,10 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div
+        className="flex-1 flex flex-col min-w-0 overflow-hidden transition-all duration-300"
+        style={{ marginRight: copilotOpen && !copilotExpanded ? 360 : copilotOpen && copilotExpanded ? 520 : 0 }}
+      >
         {/* Topbar */}
         <header className="bg-white border-b border-gray-100 px-4 lg:px-6 h-14 flex items-center gap-4 flex-shrink-0">
           {/* Mobile menu button */}
@@ -214,6 +236,18 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
               <Bell className="w-4 h-4" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
             </Button>
+            {/* AI Copilot toggle in topbar */}
+            <button
+              onClick={() => setCopilotOpen(!copilotOpen)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                copilotOpen
+                  ? "bg-indigo-600 text-white"
+                  : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-100"
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Copilot</span>
+            </button>
             {user && (
               <Avatar className="w-7 h-7 cursor-pointer" onClick={() => navigate("/settings")}>
                 <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs font-semibold">
@@ -229,6 +263,21 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
           {children}
         </main>
       </div>
+
+      {/* Global AI Copilot Panel */}
+      <AICopilot
+        isOpen={copilotOpen}
+        onClose={() => { setCopilotOpen(false); setCopilotExpanded(false); }}
+        isExpanded={copilotExpanded}
+        onToggleExpand={() => setCopilotExpanded(!copilotExpanded)}
+      />
+
+      {/* Floating trigger (only when copilot is closed) */}
+      <CopilotTrigger
+        isOpen={copilotOpen}
+        onClick={() => setCopilotOpen(true)}
+        hasNotification={true}
+      />
     </div>
   );
 }
