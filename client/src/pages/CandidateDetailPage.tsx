@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   Brain, Star, AlertTriangle, CheckCircle2, Edit, Calendar,
   GitCompare, ChevronDown, ChevronUp, Sparkles, MessageSquare,
-  ThumbsUp, ThumbsDown, RotateCcw, FileText, TrendingUp
+  ThumbsUp, ThumbsDown, RotateCcw, FileText, TrendingUp, Download
 } from "lucide-react";
 import { mockCandidates } from "@/lib/mockData";
 import { useNavigate } from "@/hooks/useNavigate";
@@ -103,6 +103,45 @@ export default function CandidateDetailPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                onClick={() => {
+                  const lines = [
+                    `候选人画像报告 - ${candidate.name}`,
+                    `${'='.repeat(40)}`,
+                    `基本信息`,
+                    `岗位：${candidate.jobTitle}`,
+                    `当前职位：${candidate.currentTitle} @ ${candidate.currentCompany}`,
+                    `经验：${candidate.experience}年 | 学历：${candidate.education} | 地点：${candidate.location}`,
+                    ``,
+                    `AI综合评分：${candidate.aiScore}/100`,
+                    `AI推荐：${candidate.recommendation === 'strong_yes' ? '强烈推荐' : candidate.recommendation === 'yes' ? '推荐' : '待定'}`,
+                    ``,
+                    `各维度评分`,
+                    ...Object.entries(candidate.dimensions).map(([k,v]) => `  ${dimensionLabels[k] || k}: ${v}/100`),
+                    ``,
+                    `AI结论`,
+                    candidate.aiConclusion || candidate.summary || '',
+                    ``,
+                    `优势`,
+                    ...(candidate.strengths || []).map(s => `  • ${s}`),
+                    ``,
+                    `风险点`,
+                    ...(candidate.riskTags || []).map(r => `  ⚠ ${r}`),
+                  ];
+                  const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url; a.download = `候选人画像_${candidate.name}.txt`;
+                  a.click(); URL.revokeObjectURL(url);
+                  toast.success('候选人画像已导出');
+                }}
+              >
+                <Download className="w-3.5 h-3.5 mr-1.5" />
+                导出画像
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

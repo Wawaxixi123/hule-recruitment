@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
   Brain, Star, AlertTriangle, CheckCircle2, X, Plus,
-  ThumbsUp, ThumbsDown, Sparkles, GitCompare, ChevronDown
+  ThumbsUp, ThumbsDown, Sparkles, GitCompare, ChevronDown, Download
 } from "lucide-react";
 import { mockCandidates } from "@/lib/mockData";
 import { toast } from "sonner";
@@ -96,17 +96,58 @@ export default function CandidateComparePage() {
             <h1 className="text-xl font-bold text-gray-900">候选人对比 Canvas</h1>
             <p className="text-sm text-gray-500 mt-0.5">横向对比多位候选人，AI辅助决策</p>
           </div>
-          <Button
-            onClick={handleAIAnalysis}
-            disabled={loadingAnalysis}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
-          >
-            {loadingAnalysis ? (
-              <><span className="animate-spin mr-2">⟳</span>AI分析中...</>
-            ) : (
-              <><Sparkles className="w-4 h-4 mr-1.5" />AI综合分析</>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+              onClick={() => {
+                const lines = [
+                  `候选人对比报告`,
+                  `${'='.repeat(50)}`,
+                  `对比候选人：${candidates.map(c => c.name).join('、')}`,
+                  `生成时间：${new Date().toLocaleString('zh-CN')}`,
+                  ``,
+                  `各维度评分对比`,
+                  '-'.repeat(50),
+                  ...Object.entries(dimensionLabels).map(([key, label]) => {
+                    const scores = candidates.map(c => `${c.name}: ${c.dimensions?.[key] ?? 80}`).join(' | ');
+                    return `${label}: ${scores}`;
+                  }),
+                  ``,
+                  `AI综合评分`,
+                  '-'.repeat(50),
+                  ...candidates.map(c => `${c.name}: ${c.aiScore}/100 (${c.recommendation === 'strong_yes' ? '强烈推荐' : c.recommendation === 'yes' ? '推荐' : '待定'})`),
+                  ``,
+                  `候选人优势总结`,
+                  '-'.repeat(50),
+                  ...candidates.map(c => [
+                    `《${c.name}》`,
+                    ...(c.strengths || []).map(s => `  + ${s}`),
+                    ...(c.riskTags || []).map(r => `  - 风险：${r}`),
+                  ].join('\n')),
+                ];
+                const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `候选人对比报告_${new Date().toLocaleDateString('zh-CN').replace(/\//g,'-')}.txt`;
+                a.click(); URL.revokeObjectURL(url);
+                toast.success('对比报告已导出');
+              }}
+            >
+              <Download className="w-4 h-4 mr-1.5" />导出报告
+            </Button>
+            <Button
+              onClick={handleAIAnalysis}
+              disabled={loadingAnalysis}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
+              {loadingAnalysis ? (
+                <><span className="animate-spin mr-2">⟳</span>AI分析中...</>
+              ) : (
+                <><Sparkles className="w-4 h-4 mr-1.5" />AI综合分析</>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Candidate Selector */}

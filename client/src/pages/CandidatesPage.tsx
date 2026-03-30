@@ -18,7 +18,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { mockCandidates, type Candidate } from "@/lib/mockData";
+import { mockCandidates, mockJobs, type Candidate } from "@/lib/mockData";
 import { toast } from "sonner";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -45,12 +45,14 @@ export default function CandidatesPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [aiScreening, setAiScreening] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [jobFilter, setJobFilter] = useState("all");
 
   const filtered = mockCandidates
     .filter((c) => {
       const matchSearch = c.name.includes(search) || c.currentTitle.includes(search) || c.currentCompany.includes(search);
       const matchStatus = statusFilter === "all" || c.status === statusFilter;
-      return matchSearch && matchStatus;
+      const matchJob = jobFilter === "all" || c.jobId === jobFilter;
+      return matchSearch && matchStatus && matchJob;
     })
     .sort((a, b) => sortBy === "score" ? b.aiScore - a.aiScore : 0);
 
@@ -174,6 +176,26 @@ export default function CandidatesPage() {
               </button>
             ))}
           </div>
+          {/* 岗位快速筛选 */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="border-gray-200 text-gray-600 h-9">
+                <Filter className="w-3.5 h-3.5 mr-1.5" />
+                {jobFilter === "all" ? "全部岗位" : mockJobs.find(j => j.id === jobFilter)?.title || "全部岗位"}
+                <ChevronDown className="w-3.5 h-3.5 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuItem onClick={() => setJobFilter("all")} className={jobFilter === "all" ? "text-indigo-600 font-medium" : ""}>
+                全部岗位
+              </DropdownMenuItem>
+              {mockJobs.filter(j => j.status === "active").map(job => (
+                <DropdownMenuItem key={job.id} onClick={() => setJobFilter(job.id)} className={jobFilter === job.id ? "text-indigo-600 font-medium" : ""}>
+                  {job.title}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             variant="outline"
             size="sm"

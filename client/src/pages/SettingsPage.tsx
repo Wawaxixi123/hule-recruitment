@@ -68,7 +68,7 @@ export default function SettingsPage() {
 
   return (
     <AppLayout breadcrumb={[{ label: "设置" }]}>
-      <div className="p-6 space-y-5">
+      <div className="p-6 space-y-5 max-w-4xl mx-auto">
         {/* Header */}
         <div>
           <h1 className="text-xl font-bold text-gray-900">设置与权限管理</h1>

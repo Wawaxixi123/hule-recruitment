@@ -14,7 +14,8 @@ import {
   ChevronRight, CheckCircle2, AlertCircle, Sparkles,
   Video, MapPin, Phone, Brain, FileText, Star
 } from "lucide-react";
-import { mockInterviews, mockCandidates } from "@/lib/mockData";
+import { mockInterviews, mockCandidates, mockJobs } from "@/lib/mockData";
+import { Download } from "lucide-react";
 import { toast } from "sonner";
 
 const statusConfig: Record<string, { label: string; className: string; icon: typeof CheckCircle2 }> = {
@@ -43,15 +44,18 @@ export default function InterviewsPage() {
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<"list" | "generate" | "review">("list");
   const [search, setSearch] = useState("");
+  const [jobFilter, setJobFilter] = useState("all");
   const [selectedCandidate, setSelectedCandidate] = useState(mockCandidates[0]);
   const [generatingQuestions, setGeneratingQuestions] = useState(false);
   const [questionsGenerated, setQuestionsGenerated] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
   const [scores, setScores] = useState<Record<number, number>>({});
 
-  const filtered = mockInterviews.filter((i) =>
-    i.candidateName.includes(search) || i.jobTitle.includes(search)
-  );
+  const filtered = mockInterviews.filter((i) => {
+    const matchSearch = i.candidateName.includes(search) || i.jobTitle.includes(search);
+    const matchJob = jobFilter === "all" || i.jobId === jobFilter;
+    return matchSearch && matchJob;
+  });
 
   const handleGenerateQuestions = async () => {
     setGeneratingQuestions(true);
@@ -103,14 +107,38 @@ export default function InterviewsPage() {
         {/* Interview List */}
         {activeTab === "list" && (
           <div className="space-y-4">
-            <div className="relative max-w-xs">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="搜索候选人、职位..."
-                className="pl-9 h-9 border-gray-200"
-              />
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="搜索候选人、职位..."
+                  className="pl-9 h-9 border-gray-200 w-52"
+                />
+              </div>
+              {/* 岗位快速筛选 */}
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => setJobFilter("all")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    jobFilter === "all" ? "bg-indigo-600 text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-indigo-300"
+                  }`}
+                >
+                  全部岗位
+                </button>
+                {mockJobs.filter(j => j.status === "active").map(job => (
+                  <button
+                    key={job.id}
+                    onClick={() => setJobFilter(job.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      jobFilter === job.id ? "bg-indigo-600 text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-indigo-300"
+                    }`}
+                  >
+                    {job.title}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="grid gap-3">
@@ -263,6 +291,24 @@ export default function InterviewsPage() {
                   <div className="flex gap-2">
                     <Button size="sm" variant="outline" className="border-gray-200 text-xs" onClick={() => setQuestionsGenerated(false)}>
                       重新生成
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-emerald-200 text-emerald-700 text-xs hover:bg-emerald-50"
+                      onClick={() => {
+                        const content = GENERATED_QUESTIONS.map((q, i) =>
+                          `${i+1}. [【${q.type === 'basic' ? '基础题' : q.type === 'deep' ? '深挖题' : q.type === 'risk' ? '风险验证' : q.type === 'management' ? '管理能力' : '业务理解'}】${q.dimension}] ${q.question} (建议时长: ${q.time})`
+                        ).join('\n\n');
+                        const blob = new Blob([`面试题库 - ${selectedCandidate.name}\n${'='.repeat(40)}\n\n` + content], { type: 'text/plain;charset=utf-8' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url; a.download = `面试题库_${selectedCandidate.name}.txt`;
+                        a.click(); URL.revokeObjectURL(url);
+                        toast.success('面试题库已导出');
+                      }}
+                    >
+                      <Download className="w-3 h-3 mr-1" />导出题库
                     </Button>
                     <Button size="sm" className="bg-indigo-600 text-white text-xs" onClick={() => toast.success("面试题已保存")}>
                       保存使用

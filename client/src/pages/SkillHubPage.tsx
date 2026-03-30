@@ -231,13 +231,21 @@ export default function SkillHubPage() {
                     </div>
 
                     <div className="flex gap-2 mt-3">
-                      <Button
-                        size="sm"
-                        className="flex-1 h-7 bg-indigo-600 text-white text-xs"
-                        onClick={() => toast.success(`已应用「${skill.name}」`)}
-                      >
-                        应用
-                      </Button>
+                      {skill.type === "official" ? (
+                        <div className="flex-1 flex items-center gap-1.5 px-3 h-7 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium">
+                          <CheckCircle2 className="w-3 h-3" />
+                          官方技能 · 已默认加载
+                        </div>
+                      ) : (
+                        <Button
+                          size="sm"
+                          className="flex-1 h-7 bg-indigo-600 text-white text-xs"
+                          onClick={() => toast.success(`已将「${skill.name}」设为当前评估模型，候选人评分将按此技能包权重重新计算`)}
+                        >
+                          <Zap className="w-3 h-3 mr-1" />
+                          应用为评估模型
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="outline"

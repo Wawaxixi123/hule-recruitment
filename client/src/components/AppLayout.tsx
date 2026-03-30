@@ -1,6 +1,6 @@
 /**
- * AppLayout - Main application layout with sidebar + topbar + AI Copilot
- * Design: White sidebar, indigo active states, clean topbar, global AI Copilot panel
+ * AppLayout - Main application layout
+ * Horo AI: 默认常驻展开，用户点击X才收起，收起后右下角显示悬浮按钮
  */
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { AICopilot, CopilotTrigger } from "./AICopilot";
+import AICopilot from "./AICopilot";
 
 const navItems = [
   { icon: LayoutDashboard, label: "工作台", path: "/dashboard" },
@@ -43,15 +43,12 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [copilotOpen, setCopilotOpen] = useState(false);
-  const [copilotExpanded, setCopilotExpanded] = useState(false);
+  // Horo AI 默认常驻展开
+  const [copilotOpen, setCopilotOpen] = useState(true);
 
-  // Redirect if not authenticated
   useEffect(() => {
     const stored = localStorage.getItem("hule_user");
-    if (!stored) {
-      navigate("/login");
-    }
+    if (!stored) navigate("/login");
   }, [navigate]);
 
   const handleLogout = () => {
@@ -65,12 +62,18 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
     return location.startsWith(path);
   };
 
+  // Derive current page name for context suggestions
+  const currentPage = location.includes("candidates") ? "candidates"
+    : location.includes("interviews") ? "interviews"
+    : location.includes("jobs") ? "jobs"
+    : "dashboard";
+
   const SidebarContent = () => (
     <>
       {/* Logo */}
       <div className={`flex items-center gap-2.5 px-4 py-5 border-b border-gray-100 ${collapsed ? "justify-center" : ""}`}>
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-cyan-500 flex items-center justify-center flex-shrink-0">
-          <Brain className="w-4.5 h-4.5 text-white" />
+          <Brain className="w-4 h-4 text-white" />
         </div>
         {!collapsed && (
           <span className="text-base font-bold text-gray-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -86,28 +89,21 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
           return (
             <button
               key={item.path}
-              onClick={() => {
-                navigate(item.path);
-                setMobileOpen(false);
-              }}
+              onClick={() => { navigate(item.path); setMobileOpen(false); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
-                active
-                  ? "bg-indigo-50 text-indigo-700"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                active ? "bg-indigo-50 text-indigo-700" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               } ${collapsed ? "justify-center" : ""}`}
               title={collapsed ? item.label : undefined}
             >
-              <item.icon className={`w-4.5 h-4.5 flex-shrink-0 ${active ? "text-indigo-600" : ""}`} />
+              <item.icon className={`w-4 h-4 flex-shrink-0 ${active ? "text-indigo-600" : ""}`} />
               {!collapsed && <span>{item.label}</span>}
-              {active && !collapsed && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />
-              )}
+              {active && !collapsed && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />}
             </button>
           );
         })}
       </nav>
 
-      {/* AI Copilot shortcut in sidebar */}
+      {/* Horo AI shortcut */}
       {!collapsed && (
         <div className="px-3 pb-2">
           <button
@@ -117,7 +113,7 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
             <div className="w-5 h-5 rounded-lg bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
               <Sparkles className="w-3 h-3 text-white" />
             </div>
-            <span>AI Copilot</span>
+            <span>Horo AI</span>
             <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           </button>
         </div>
@@ -143,13 +139,11 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={() => navigate("/settings")}>
-                <Settings className="w-4 h-4 mr-2" />
-                账户设置
+                <Settings className="w-4 h-4 mr-2" />账户设置
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-red-600">
-                <LogOut className="w-4 h-4 mr-2" />
-                退出登录
+                <LogOut className="w-4 h-4 mr-2" />退出登录
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -169,11 +163,7 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside
-        className={`hidden lg:flex flex-col relative bg-white border-r border-gray-100 sidebar-transition flex-shrink-0 ${
-          collapsed ? "w-16" : "w-56"
-        }`}
-      >
+      <aside className={`hidden lg:flex flex-col relative bg-white border-r border-gray-100 flex-shrink-0 transition-all duration-200 ${collapsed ? "w-16" : "w-56"}`}>
         <SidebarContent />
       </aside>
 
@@ -187,22 +177,17 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
         </div>
       )}
 
-      {/* Main content */}
+      {/* Main content area — shrinks when Horo AI is open */}
       <div
         className="flex-1 flex flex-col min-w-0 overflow-hidden transition-all duration-300"
-        style={{ marginRight: copilotOpen && !copilotExpanded ? 360 : copilotOpen && copilotExpanded ? 520 : 0 }}
+        style={{ marginRight: copilotOpen ? 380 : 0 }}
       >
         {/* Topbar */}
         <header className="bg-white border-b border-gray-100 px-4 lg:px-6 h-14 flex items-center gap-4 flex-shrink-0">
-          {/* Mobile menu button */}
-          <button
-            className="lg:hidden p-1.5 rounded-lg text-gray-500 hover:bg-gray-100"
-            onClick={() => setMobileOpen(true)}
-          >
+          <button className="lg:hidden p-1.5 rounded-lg text-gray-500 hover:bg-gray-100" onClick={() => setMobileOpen(true)}>
             <Menu className="w-5 h-5" />
           </button>
 
-          {/* Breadcrumb */}
           <div className="flex-1 min-w-0">
             {breadcrumb && breadcrumb.length > 0 ? (
               <div className="flex items-center gap-1.5 text-sm">
@@ -210,12 +195,7 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
                   <span key={i} className="flex items-center gap-1.5">
                     {i > 0 && <span className="text-gray-300">/</span>}
                     {item.path ? (
-                      <button
-                        onClick={() => navigate(item.path!)}
-                        className="text-gray-500 hover:text-indigo-600 transition-colors"
-                      >
-                        {item.label}
-                      </button>
+                      <button onClick={() => navigate(item.path!)} className="text-gray-500 hover:text-indigo-600 transition-colors">{item.label}</button>
                     ) : (
                       <span className="text-gray-900 font-medium">{item.label}</span>
                     )}
@@ -227,7 +207,6 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
             ) : null}
           </div>
 
-          {/* Right actions */}
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="w-8 h-8 text-gray-500 hover:text-gray-700">
               <Search className="w-4 h-4" />
@@ -236,17 +215,15 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
               <Bell className="w-4 h-4" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
             </Button>
-            {/* AI Copilot toggle in topbar */}
+            {/* Horo AI toggle */}
             <button
               onClick={() => setCopilotOpen(!copilotOpen)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                copilotOpen
-                  ? "bg-indigo-600 text-white"
-                  : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-100"
+                copilotOpen ? "bg-violet-600 text-white" : "bg-violet-50 text-violet-700 hover:bg-violet-100 border border-violet-100"
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Copilot</span>
+              <Brain className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Horo AI</span>
             </button>
             {user && (
               <Avatar className="w-7 h-7 cursor-pointer" onClick={() => navigate("/settings")}>
@@ -264,19 +241,11 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
         </main>
       </div>
 
-      {/* Global AI Copilot Panel */}
+      {/* Horo AI Panel — always mounted, shown/hidden */}
       <AICopilot
         isOpen={copilotOpen}
-        onClose={() => { setCopilotOpen(false); setCopilotExpanded(false); }}
-        isExpanded={copilotExpanded}
-        onToggleExpand={() => setCopilotExpanded(!copilotExpanded)}
-      />
-
-      {/* Floating trigger (only when copilot is closed) */}
-      <CopilotTrigger
-        isOpen={copilotOpen}
-        onClick={() => setCopilotOpen(true)}
-        hasNotification={true}
+        onToggle={() => setCopilotOpen(o => !o)}
+        currentPage={currentPage}
       />
     </div>
   );
