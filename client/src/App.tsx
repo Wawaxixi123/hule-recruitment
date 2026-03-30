@@ -4,36 +4,57 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
-
+import LandingPage from "./pages/LandingPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import DashboardPage from "./pages/DashboardPage";
+import JobsPage from "./pages/JobsPage";
+import JobCreatePage from "./pages/JobCreatePage";
+import JobDetailPage from "./pages/JobDetailPage";
+import CandidatesPage from "./pages/CandidatesPage";
+import CandidateDetailPage from "./pages/CandidateDetailPage";
+import CandidateComparePage from "./pages/CandidateComparePage";
+import InterviewsPage from "./pages/InterviewsPage";
+import InterviewDetailPage from "./pages/InterviewDetailPage";
+import SkillHubPage from "./pages/SkillHubPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import SettingsPage from "./pages/SettingsPage";
+import { AuthProvider } from "./contexts/AuthContext";
 
 function Router() {
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
+      <Route path="/" component={LandingPage} />
+      <Route path="/login" component={LoginPage} />
+      <Route path="/register" component={RegisterPage} />
+      <Route path="/dashboard" component={DashboardPage} />
+      <Route path="/jobs" component={JobsPage} />
+      <Route path="/jobs/create" component={JobCreatePage} />
+      <Route path="/jobs/:id" component={JobDetailPage} />
+      <Route path="/candidates" component={CandidatesPage} />
+      <Route path="/candidates/compare" component={CandidateComparePage} />
+      <Route path="/candidates/:id" component={CandidateDetailPage} />
+      <Route path="/interviews" component={InterviewsPage} />
+      <Route path="/interviews/:id" component={InterviewDetailPage} />
+      <Route path="/skill-hub" component={SkillHubPage} />
+      <Route path="/analytics" component={AnalyticsPage} />
+      <Route path="/settings" component={SettingsPage} />
+      <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+      <ThemeProvider defaultTheme="light">
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

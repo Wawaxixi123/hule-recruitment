@@ -31,25 +31,32 @@ class ErrorBoundary extends Component<Props, State> {
               className="text-destructive mb-6 flex-shrink-0"
             />
 
-            <h2 className="text-xl mb-4">An unexpected error occurred.</h2>
+            <h2 className="text-xl font-bold mb-2 text-gray-900">页面出现了一些问题</h2>
+            <p className="text-sm text-gray-500 mb-6">抱歉，页面遇到了意外错误。请尝试刷新页面，或返回首页重新开始。</p>
 
-            <div className="p-4 w-full rounded bg-muted overflow-auto mb-6">
-              <pre className="text-sm text-muted-foreground whitespace-break-spaces">
-                {this.state.error?.stack}
-              </pre>
+            <div className="flex gap-3">
+              <button
+                onClick={() => window.location.reload()}
+                className={cn(
+                  "flex items-center gap-2 px-5 py-2.5 rounded-xl",
+                  "bg-primary text-primary-foreground",
+                  "hover:opacity-90 cursor-pointer text-sm font-semibold"
+                )}
+              >
+                <RotateCcw size={16} />
+                刷新页面
+              </button>
+              <button
+                onClick={() => window.location.href = '/'}
+                className={cn(
+                  "flex items-center gap-2 px-5 py-2.5 rounded-xl",
+                  "border border-gray-200 text-gray-700",
+                  "hover:bg-gray-50 cursor-pointer text-sm font-semibold"
+                )}
+              >
+                返回首页
+              </button>
             </div>
-
-            <button
-              onClick={() => window.location.reload()}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg",
-                "bg-primary text-primary-foreground",
-                "hover:opacity-90 cursor-pointer"
-              )}
-            >
-              <RotateCcw size={16} />
-              Reload Page
-            </button>
           </div>
         </div>
       );
