@@ -1,6 +1,7 @@
 /**
  * Horo AI - 全局AI Copilot侧边栏
  * 常驻右侧，支持全屏模式，四种交互入口
+ * 白色/浅色主题，与主界面保持统一
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
@@ -100,44 +101,38 @@ function buildResponse(input: string): Omit<Message, "id" | "timestamp" | "role"
       ],
       taskSteps: [
         { id: "t1", label: "分析岗位核心能力", status: "done" },
-        { id: "t2", label: "生成基础/深度题", status: "done" },
-        { id: "t3", label: "生成行为/情景题", status: "done" },
-        { id: "t4", label: "配置评分标准", status: "done" },
+        { id: "t2", label: "生成基础验证题", status: "done" },
+        { id: "t3", label: "生成深挖追问题", status: "done" },
+        { id: "t4", label: "生成风险验证题", status: "done" },
       ],
-      actionCard: { type: "interview", title: "面试题库已生成 · 32道题", summary: "基础题8道、深度题12道、行为题8道、情景题4道，覆盖技术、产品、管理三个维度", actionLabel: "查看面试题库", actionPath: "/interviews" },
-      quickReplies: ["增加技术深度题", "调整题目难度", "导出题库PDF", "开始面试"],
+      actionCard: { type: "interview", title: "面试题库已生成 · 32道题", summary: "基础题 12道、深挖题 12道、风险验证题 8道，已按面试阶段分组", actionLabel: "查看面试题库", actionPath: "/interviews" },
+      quickReplies: ["增加技术深挖题", "添加行为面试题", "导出题库", "安排面试"],
     };
   }
-  if (lower.includes("复盘") || lower.includes("面试结果")) {
+  if (lower.includes("复盘") || lower.includes("面试报告")) {
     return {
-      content: "正在分析面试复盘数据，生成评估报告...",
+      content: "正在生成面试复盘报告...",
       skillCalls: [
-        { id: "s1", name: "视频面试综合评估", icon: "🎥", status: "done", duration: 3.2, output: "多维评分完成" },
-        { id: "s2", name: "360° 述职深度评估", icon: "🔄", status: "done", duration: 1.1, output: "综合评级：B+" },
+        { id: "s1", name: "面试复盘与反馈生成", icon: "📋", status: "done", duration: 1.9, output: "复盘报告已生成" },
+        { id: "s2", name: "录用决策辅助分析", icon: "🤖", status: "done", duration: 1.1, output: "录用建议：推荐" },
       ],
       taskSteps: [
-        { id: "t1", label: "解析面试记录", status: "done" },
-        { id: "t2", label: "多维度评分", status: "done" },
-        { id: "t3", label: "生成复盘报告", status: "done" },
+        { id: "t1", label: "整合面试官反馈", status: "done" },
+        { id: "t2", label: "分析候选人表现", status: "done" },
+        { id: "t3", label: "生成能力评估", status: "done" },
         { id: "t4", label: "输出录用建议", status: "done" },
       ],
-      actionCard: { type: "report", title: "面试复盘报告已生成", summary: "综合评分 78/100，技术能力强（88分），沟通表达待提升（65分），建议进行二面验证", actionLabel: "查看完整报告", actionPath: "/interviews" },
-      quickReplies: ["发送给用人部门", "安排二面", "查看历史面试", "导出报告"],
-    };
-  }
-  if (lower.includes("为什么") || lower.includes("原因")) {
-    return {
-      content: "根据AI评估数据，我来为您解释评分原因：\n\n**技术能力（68/100）**：候选人在核心技术栈上有一定基础，但缺乏大规模系统设计经验，项目复杂度相对较低。\n\n**业务理解（72/100）**：对行业有基本认知，但缺少直接相关的业务落地案例，与岗位要求的「深度业务理解」存在差距。\n\n**建议**：可以通过追问项目细节来进一步验证，重点考察「遇到技术瓶颈时的解决思路」。",
-      quickReplies: ["如何进一步验证？", "与其他候选人对比", "是否值得面试？", "查看完整画像"],
+      actionCard: { type: "report", title: "面试复盘完成", summary: "综合评分 87/100，技术能力突出，沟通表达良好，建议进入下一轮。", actionLabel: "查看完整复盘", actionPath: "/interviews" },
+      quickReplies: ["查看详细评分", "发送录用通知", "安排下一轮", "存入候选人档案"],
     };
   }
   return {
-    content: "你好！我是 **Horo AI**，你的专属 HR 智能助手。\n\n我可以帮你：\n\n• **生成JD** - 输入岗位名称，自动生成高质量职位描述\n• **筛选简历** - 批量评估候选人，五维量化评分\n• **生成面试题** - 基于JD和简历定制面试题库\n• **对比候选人** - 多维横向对比，辅助录用决策\n• **复盘面试** - 分析面试记录，生成评估报告\n\n请告诉我您想要完成什么任务？",
-    quickReplies: ["生成JD", "筛选简历", "生成面试题", "对比候选人"],
+    content: "我理解您的需求。作为您的专属HR智能助手，我可以帮您：\n\n**招聘全链路支持**\n- 生成高质量JD和岗位描述\n- 智能筛选和评估候选人\n- 生成结构化面试题库\n- 面试复盘和录用决策\n\n请告诉我您具体想做什么？",
+    quickReplies: ["生成JD", "筛选候选人", "生成面试题", "候选人对比"],
   };
 }
 
-function SkillSelector({ onSelect, onClose }: { onSelect: (skill: string) => void; onClose: () => void }) {
+function SkillSelector({ onSelect, onClose }: { onSelect: (text: string) => void; onClose: () => void }) {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("全部");
   const categories = ["全部", "招聘全链路", "人才管理", "组织与文化", "合规文档", "数据与洞察", "AI辅助决策"];
@@ -148,35 +143,35 @@ function SkillSelector({ onSelect, onClose }: { onSelect: (skill: string) => voi
     return matchCat && matchSearch;
   });
   return (
-    <div className="absolute bottom-full left-0 mb-2 w-[340px] bg-[#1a1a2e] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50">
-      <div className="p-3 border-b border-white/10">
-        <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
-          <Search className="w-3.5 h-3.5 text-white/40" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索技能..." className="bg-transparent text-white text-sm flex-1 outline-none placeholder:text-white/30" autoFocus />
+    <div className="absolute bottom-full left-0 mb-2 w-[340px] bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden z-50">
+      <div className="p-3 border-b border-gray-100">
+        <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+          <Search className="w-3.5 h-3.5 text-gray-400" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索技能..." className="bg-transparent text-gray-800 text-sm flex-1 outline-none placeholder:text-gray-400" autoFocus />
         </div>
       </div>
-      <div className="flex gap-1 p-2 overflow-x-auto border-b border-white/10" style={{scrollbarWidth:"none"}}>
+      <div className="flex gap-1 p-2 overflow-x-auto border-b border-gray-100" style={{scrollbarWidth:"none"}}>
         {categories.map(cat => (
-          <button key={cat} onClick={() => setActiveCategory(cat)} className={`whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-medium transition-all ${activeCategory === cat ? "bg-violet-600 text-white" : "text-white/50 hover:text-white hover:bg-white/10"}`}>{cat}</button>
+          <button key={cat} onClick={() => setActiveCategory(cat)} className={`whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-medium transition-all ${activeCategory === cat ? "bg-indigo-600 text-white" : "text-gray-500 hover:text-gray-800 hover:bg-gray-100"}`}>{cat}</button>
         ))}
       </div>
-      <div className="h-[240px] overflow-y-auto" style={{scrollbarWidth:"thin",scrollbarColor:"rgba(255,255,255,0.1) transparent"}}>
+      <div className="h-[240px] overflow-y-auto" style={{scrollbarWidth:"thin",scrollbarColor:"rgba(0,0,0,0.1) transparent"}}>
         <div className="p-2 space-y-1">
           {filtered.map(skill => (
-            <button key={skill.id} onClick={() => { onSelect(`使用【${skill.name}】技能`); onClose(); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/8 transition-colors">
+            <button key={skill.id} onClick={() => { onSelect(`使用【${skill.name}】技能`); onClose(); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors">
               <div className="flex items-start gap-2.5">
                 <span className="text-lg leading-none mt-0.5">{skill.icon}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-white/90 text-sm font-medium truncate">{skill.name}</span>
-                    {(skill as any).accuracy && <span className="text-xs text-emerald-400 shrink-0">{(skill as any).accuracy}%</span>}
+                    <span className="text-gray-800 text-sm font-medium truncate">{skill.name}</span>
+                    {(skill as any).accuracy && <span className="text-xs text-emerald-600 shrink-0">{(skill as any).accuracy}%</span>}
                   </div>
-                  <p className="text-white/40 text-xs mt-0.5 line-clamp-1">{skill.description}</p>
+                  <p className="text-gray-400 text-xs mt-0.5 line-clamp-1">{skill.description}</p>
                 </div>
               </div>
             </button>
           ))}
-          {filtered.length === 0 && <div className="text-center py-8 text-white/30 text-sm">未找到匹配的技能</div>}
+          {filtered.length === 0 && <div className="text-center py-8 text-gray-400 text-sm">未找到匹配的技能</div>}
         </div>
       </div>
     </div>
@@ -191,21 +186,21 @@ function FileSelector({ onSelect, onClose }: { onSelect: (file: string) => void;
     { name: "岗位能力模型.docx", type: "docx", size: "96KB" },
   ];
   return (
-    <div className="absolute bottom-full left-0 mb-2 w-[280px] bg-[#1a1a2e] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50">
-      <div className="p-3 border-b border-white/10 flex items-center justify-between">
-        <span className="text-white/70 text-sm font-medium">选择文件</span>
-        <button onClick={onClose} className="text-white/40 hover:text-white/70"><X className="w-4 h-4" /></button>
+    <div className="absolute bottom-full left-0 mb-2 w-[280px] bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden z-50">
+      <div className="p-3 border-b border-gray-100 flex items-center justify-between">
+        <span className="text-gray-700 text-sm font-medium">选择文件</span>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
       </div>
       <div className="p-2 space-y-1">
         {files.map((file, i) => (
-          <button key={i} onClick={() => { onSelect(`[附件: ${file.name}]`); onClose(); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/8 transition-colors flex items-center gap-3">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${file.type === "pdf" ? "bg-red-500/20 text-red-400" : file.type === "xlsx" ? "bg-emerald-500/20 text-emerald-400" : "bg-blue-500/20 text-blue-400"}`}>{file.type.toUpperCase().slice(0,3)}</div>
-            <div className="flex-1 min-w-0"><p className="text-white/80 text-sm truncate">{file.name}</p><p className="text-white/30 text-xs">{file.size}</p></div>
+          <button key={i} onClick={() => { onSelect(`[附件: ${file.name}]`); onClose(); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${file.type === "pdf" ? "bg-red-50 text-red-500" : file.type === "xlsx" ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-500"}`}>{file.type.toUpperCase().slice(0,3)}</div>
+            <div className="flex-1 min-w-0"><p className="text-gray-700 text-sm truncate">{file.name}</p><p className="text-gray-400 text-xs">{file.size}</p></div>
           </button>
         ))}
-        <button onClick={() => { toast.info("文件上传功能即将上线"); onClose(); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/8 transition-colors flex items-center gap-3 border border-dashed border-white/10">
-          <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center"><Plus className="w-4 h-4 text-white/40" /></div>
-          <span className="text-white/40 text-sm">上传新文件</span>
+        <button onClick={() => { toast.info("文件上传功能即将上线"); onClose(); }} className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-3 border border-dashed border-gray-200">
+          <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center"><Plus className="w-4 h-4 text-gray-400" /></div>
+          <span className="text-gray-400 text-sm">上传新文件</span>
         </button>
       </div>
     </div>
@@ -217,76 +212,120 @@ function MessageBubble({ msg, onQuickReply }: { msg: Message; onQuickReply: (tex
   return (
     <div className={`flex gap-2.5 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
       {!isUser && (
-        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center shrink-0 mt-1">
+        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shrink-0 mt-1">
           <Brain className="w-3.5 h-3.5 text-white" />
         </div>
       )}
       <div className={`flex flex-col gap-2 max-w-[85%] ${isUser ? "items-end" : "items-start"}`}>
-        <div className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${isUser ? "bg-violet-600 text-white rounded-tr-sm" : "bg-white/8 text-white/85 rounded-tl-sm border border-white/8"}`}>
+        {/* 消息气泡 */}
+        <div className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+          isUser
+            ? "bg-indigo-600 text-white rounded-tr-sm"
+            : "bg-gray-50 text-gray-800 rounded-tl-sm border border-gray-100"
+        }`}>
           {msg.content.split("\n").map((line, i) => {
             const parts = line.split(/\*\*(.*?)\*\*/g);
-            return <p key={i} className={i > 0 ? "mt-1" : ""}>{parts.map((part, j) => j % 2 === 1 ? <strong key={j} className="font-semibold text-white">{part}</strong> : part)}</p>;
+            return (
+              <p key={i} className={i > 0 ? "mt-1" : ""}>
+                {parts.map((part, j) =>
+                  j % 2 === 1
+                    ? <strong key={j} className={`font-semibold ${isUser ? "text-white" : "text-gray-900"}`}>{part}</strong>
+                    : part
+                )}
+              </p>
+            );
           })}
         </div>
+
+        {/* 技能调用 */}
         {msg.skillCalls && msg.skillCalls.length > 0 && (
           <div className="w-full space-y-1.5">
-            <div className="flex items-center gap-1.5 text-white/40 text-xs"><Zap className="w-3 h-3" /><span>技能调用</span></div>
+            <div className="flex items-center gap-1.5 text-gray-400 text-xs"><Zap className="w-3 h-3" /><span>技能调用</span></div>
             {msg.skillCalls.map(skill => (
-              <div key={skill.id} className="flex items-center gap-2.5 bg-white/5 border border-white/8 rounded-xl px-3 py-2">
+              <div key={skill.id} className="flex items-center gap-2.5 bg-white border border-gray-100 rounded-xl px-3 py-2 shadow-sm">
                 <span className="text-base leading-none">{skill.icon}</span>
-                <div className="flex-1 min-w-0"><p className="text-white/80 text-xs font-medium truncate">{skill.name}</p>{skill.output && <p className="text-white/40 text-xs mt-0.5">{skill.output}</p>}</div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-gray-700 text-xs font-medium truncate">{skill.name}</p>
+                  {skill.output && <p className="text-gray-400 text-xs mt-0.5">{skill.output}</p>}
+                </div>
                 <div className="flex items-center gap-1.5 shrink-0">
-                  {skill.duration && <span className="text-white/30 text-xs">{skill.duration}s</span>}
-                  {skill.status === "done" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
-                  {skill.status === "running" && <Loader2 className="w-3.5 h-3.5 text-violet-400 animate-spin" />}
-                  {skill.status === "error" && <AlertCircle className="w-3.5 h-3.5 text-red-400" />}
+                  {skill.duration && <span className="text-gray-300 text-xs">{skill.duration}s</span>}
+                  {skill.status === "done" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+                  {skill.status === "running" && <Loader2 className="w-3.5 h-3.5 text-indigo-500 animate-spin" />}
+                  {skill.status === "error" && <AlertCircle className="w-3.5 h-3.5 text-red-500" />}
                 </div>
               </div>
             ))}
           </div>
         )}
+
+        {/* 执行流程 */}
         {msg.taskSteps && msg.taskSteps.length > 0 && (
           <div className="w-full space-y-1">
-            <div className="flex items-center gap-1.5 text-white/40 text-xs"><Hash className="w-3 h-3" /><span>执行流程</span></div>
-            <div className="bg-white/5 border border-white/8 rounded-xl px-3 py-2.5 space-y-2">
+            <div className="flex items-center gap-1.5 text-gray-400 text-xs"><Hash className="w-3 h-3" /><span>执行流程</span></div>
+            <div className="bg-white border border-gray-100 rounded-xl px-3 py-2.5 space-y-2 shadow-sm">
               {msg.taskSteps.map((step, i) => (
                 <div key={step.id} className="flex items-center gap-2.5">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${step.status === "done" ? "bg-emerald-500/20 text-emerald-400" : step.status === "running" ? "bg-violet-500/20 text-violet-400" : "bg-white/5 text-white/30"}`}>{step.status === "done" ? "✓" : i + 1}</div>
-                  <span className={`text-xs ${step.status === "done" ? "text-white/70" : step.status === "running" ? "text-violet-300" : "text-white/30"}`}>{step.label}</span>
-                  {step.status === "running" && <Loader2 className="w-3 h-3 text-violet-400 animate-spin ml-auto" />}
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
+                    step.status === "done" ? "bg-emerald-50 text-emerald-600" :
+                    step.status === "running" ? "bg-indigo-50 text-indigo-600" :
+                    "bg-gray-50 text-gray-400"
+                  }`}>{step.status === "done" ? "✓" : i + 1}</div>
+                  <span className={`text-xs ${
+                    step.status === "done" ? "text-gray-600" :
+                    step.status === "running" ? "text-indigo-600" :
+                    "text-gray-300"
+                  }`}>{step.label}</span>
+                  {step.status === "running" && <Loader2 className="w-3 h-3 text-indigo-500 animate-spin ml-auto" />}
                 </div>
               ))}
             </div>
           </div>
         )}
+
+        {/* 操作卡片 */}
         {msg.actionCard && (
-          <div className="w-full bg-gradient-to-br from-violet-600/20 to-cyan-600/10 border border-violet-500/30 rounded-xl p-3.5">
+          <div className="w-full bg-gradient-to-br from-indigo-50 to-cyan-50 border border-indigo-100 rounded-xl p-3.5">
             <div className="flex items-start gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-violet-500/20 flex items-center justify-center shrink-0">
-                {msg.actionCard.type === "jd" && <FileText className="w-4 h-4 text-violet-400" />}
-                {msg.actionCard.type === "candidates" && <Users className="w-4 h-4 text-violet-400" />}
-                {msg.actionCard.type === "interview" && <MessageSquare className="w-4 h-4 text-violet-400" />}
-                {msg.actionCard.type === "compare" && <BarChart3 className="w-4 h-4 text-violet-400" />}
-                {msg.actionCard.type === "report" && <BookOpen className="w-4 h-4 text-violet-400" />}
+              <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
+                {msg.actionCard.type === "jd" && <FileText className="w-4 h-4 text-indigo-600" />}
+                {msg.actionCard.type === "candidates" && <Users className="w-4 h-4 text-indigo-600" />}
+                {msg.actionCard.type === "interview" && <MessageSquare className="w-4 h-4 text-indigo-600" />}
+                {msg.actionCard.type === "compare" && <BarChart3 className="w-4 h-4 text-indigo-600" />}
+                {msg.actionCard.type === "report" && <BookOpen className="w-4 h-4 text-indigo-600" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-white/90 text-sm font-semibold">{msg.actionCard.title}</p>
-                <p className="text-white/50 text-xs mt-0.5 leading-relaxed">{msg.actionCard.summary}</p>
-                <button onClick={() => { window.location.href = msg.actionCard!.actionPath; }} className="mt-2 flex items-center gap-1.5 text-violet-400 text-xs font-medium hover:text-violet-300 transition-colors">
+                <p className="text-gray-800 text-sm font-semibold">{msg.actionCard.title}</p>
+                <p className="text-gray-500 text-xs mt-0.5 leading-relaxed">{msg.actionCard.summary}</p>
+                <button
+                  onClick={() => { window.location.href = msg.actionCard!.actionPath; }}
+                  className="mt-2 flex items-center gap-1.5 text-indigo-600 text-xs font-medium hover:text-indigo-700 transition-colors"
+                >
                   {msg.actionCard.actionLabel}<ArrowRight className="w-3 h-3" />
                 </button>
               </div>
             </div>
           </div>
         )}
+
+        {/* 快速回复 */}
         {msg.quickReplies && msg.quickReplies.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {msg.quickReplies.map((reply, i) => (
-              <button key={i} onClick={() => onQuickReply(reply)} className="px-2.5 py-1 bg-white/8 hover:bg-white/15 border border-white/10 hover:border-violet-500/50 rounded-full text-white/60 hover:text-white/90 text-xs transition-all">{reply}</button>
+              <button
+                key={i}
+                onClick={() => onQuickReply(reply)}
+                className="px-2.5 py-1 bg-white hover:bg-indigo-50 border border-gray-200 hover:border-indigo-300 rounded-full text-gray-500 hover:text-indigo-600 text-xs transition-all"
+              >
+                {reply}
+              </button>
             ))}
           </div>
         )}
-        <span className="text-white/20 text-xs px-1">{msg.timestamp.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}</span>
+
+        <span className="text-gray-300 text-xs px-1">
+          {msg.timestamp.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
+        </span>
       </div>
     </div>
   );
@@ -347,7 +386,11 @@ export default function AICopilot({ isOpen, onToggle, currentPage = "dashboard" 
 
   if (!isOpen) {
     return (
-      <button onClick={onToggle} className="fixed right-5 bottom-5 z-40 w-12 h-12 rounded-full bg-gradient-to-br from-violet-600 to-cyan-500 shadow-lg shadow-violet-500/30 flex items-center justify-center hover:scale-110 transition-transform" title="打开 Horo AI">
+      <button
+        onClick={onToggle}
+        className="fixed right-5 bottom-5 z-40 w-12 h-12 rounded-full bg-gradient-to-br from-indigo-600 to-cyan-500 shadow-lg shadow-indigo-200 flex items-center justify-center hover:scale-110 transition-transform"
+        title="打开 Horo AI"
+      >
         <Brain className="w-5 h-5 text-white" />
       </button>
     );
@@ -355,86 +398,149 @@ export default function AICopilot({ isOpen, onToggle, currentPage = "dashboard" 
 
   return (
     <>
-      {isFullscreen && <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onClick={() => setIsFullscreen(false)} />}
-      <div className="fixed right-0 top-0 z-50 flex flex-col bg-[#0f0f1a] border-l border-white/8 shadow-2xl" style={{ width: isFullscreen ? "100vw" : "380px", height: "100vh" }}>
+      {isFullscreen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={() => setIsFullscreen(false)} />
+      )}
+      <div
+        className="fixed right-0 top-0 z-50 flex flex-col bg-white border-l border-gray-200 shadow-xl"
+        style={{ width: isFullscreen ? "100vw" : "380px", height: "100vh" }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/8 shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0 bg-white">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center">
               <Brain className="w-4 h-4 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-white font-semibold text-sm">Horo AI</span>
+                <span className="text-gray-900 font-semibold text-sm">Horo AI</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               </div>
-              <p className="text-white/40 text-xs">专属 HR 智能助手</p>
+              <p className="text-gray-400 text-xs">专属 HR 智能助手</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={() => setIsFullscreen(f => !f)} className="w-7 h-7 rounded-lg hover:bg-white/8 flex items-center justify-center text-white/40 hover:text-white/70 transition-colors" title={isFullscreen ? "退出全屏" : "全屏模式"}>
+            <button
+              onClick={() => setIsFullscreen(f => !f)}
+              className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+              title={isFullscreen ? "退出全屏" : "全屏模式"}
+            >
               {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
             </button>
-            <button onClick={onToggle} className="w-7 h-7 rounded-lg hover:bg-white/8 flex items-center justify-center text-white/40 hover:text-white/70 transition-colors" title="收起">
+            <button
+              onClick={onToggle}
+              className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+              title="收起"
+            >
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
+
         {/* Quick Actions */}
-        <div className="px-3 py-2 border-b border-white/8 shrink-0">
+        <div className="px-3 py-2 border-b border-gray-100 shrink-0 bg-white">
           <div className="flex gap-1.5 overflow-x-auto" style={{scrollbarWidth:"none"}}>
             {QUICK_ACTIONS.map((action, i) => (
-              <button key={i} onClick={() => sendMessage(action.prompt)} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 hover:bg-violet-600/20 border border-white/8 hover:border-violet-500/40 rounded-lg text-white/60 hover:text-white/90 text-xs whitespace-nowrap transition-all shrink-0">
+              <button
+                key={i}
+                onClick={() => sendMessage(action.prompt)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-50 hover:bg-indigo-50 border border-gray-200 hover:border-indigo-300 rounded-lg text-gray-500 hover:text-indigo-600 text-xs whitespace-nowrap transition-all shrink-0"
+              >
                 {action.icon}{action.label}
               </button>
             ))}
           </div>
         </div>
+
         {/* Context Suggestions */}
         {visibleSuggestions.length > 0 && (
-          <div className="px-3 py-2 space-y-1.5 border-b border-white/8 shrink-0">
+          <div className="px-3 py-2 space-y-1.5 border-b border-gray-100 shrink-0 bg-amber-50/50">
             {visibleSuggestions.slice(0, 2).map(s => (
-              <div key={s.id} className="flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <p className="text-white/70 text-xs flex-1 leading-relaxed">{s.text}</p>
+              <div key={s.id} className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <p className="text-gray-600 text-xs flex-1 leading-relaxed">{s.text}</p>
                 <div className="flex items-center gap-1 shrink-0">
-                  <button onClick={() => sendMessage(s.action)} className="text-amber-400 text-xs font-medium hover:text-amber-300 transition-colors">执行</button>
-                  <button onClick={() => setDismissedSuggestions(d => [...d, s.id])} className="text-white/20 hover:text-white/50 transition-colors ml-1"><X className="w-3 h-3" /></button>
+                  <button
+                    onClick={() => sendMessage(s.action)}
+                    className="text-amber-600 text-xs font-medium hover:text-amber-700 transition-colors"
+                  >执行</button>
+                  <button
+                    onClick={() => setDismissedSuggestions(d => [...d, s.id])}
+                    className="text-gray-300 hover:text-gray-500 transition-colors ml-1"
+                  ><X className="w-3 h-3" /></button>
                 </div>
               </div>
             ))}
           </div>
         )}
+
         {/* Messages */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-4" style={{scrollbarWidth:"thin",scrollbarColor:"rgba(255,255,255,0.1) transparent"}}>
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto px-3 py-3 space-y-4 bg-gray-50/30"
+          style={{scrollbarWidth:"thin", scrollbarColor:"rgba(0,0,0,0.1) transparent"}}
+        >
           {messages.map(msg => <MessageBubble key={msg.id} msg={msg} onQuickReply={sendMessage} />)}
           {isTyping && (
             <div className="flex gap-2.5">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center shrink-0">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center shrink-0">
                 <Brain className="w-3.5 h-3.5 text-white" />
               </div>
-              <div className="bg-white/8 border border-white/8 rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{animationDelay:"0ms"}} />
-                <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{animationDelay:"150ms"}} />
-                <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce" style={{animationDelay:"300ms"}} />
+              <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-1.5 shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style={{animationDelay:"0ms"}} />
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style={{animationDelay:"150ms"}} />
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style={{animationDelay:"300ms"}} />
               </div>
             </div>
           )}
         </div>
+
         {/* Input */}
-        <div className="px-3 py-3 border-t border-white/8 shrink-0">
+        <div className="px-3 py-3 border-t border-gray-100 shrink-0 bg-white">
           <div className="relative">
-            {showSkillSelector && <SkillSelector onSelect={text => setInput(prev => prev + " " + text)} onClose={() => setShowSkillSelector(false)} />}
-            {showFileSelector && <FileSelector onSelect={text => setInput(prev => prev + " " + text)} onClose={() => setShowFileSelector(false)} />}
-            <div className="flex flex-col gap-2 bg-white/5 border border-white/10 rounded-xl p-2.5 focus-within:border-violet-500/50 transition-colors">
-              <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="输入任务或问题... (Enter发送)" rows={2} className="bg-transparent text-white/85 text-sm resize-none outline-none placeholder:text-white/25 leading-relaxed w-full" />
+            {showSkillSelector && (
+              <SkillSelector
+                onSelect={text => setInput(prev => prev + " " + text)}
+                onClose={() => setShowSkillSelector(false)}
+              />
+            )}
+            {showFileSelector && (
+              <FileSelector
+                onSelect={text => setInput(prev => prev + " " + text)}
+                onClose={() => setShowFileSelector(false)}
+              />
+            )}
+            <div className="flex flex-col gap-2 bg-white border border-gray-200 rounded-xl p-2.5 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-50 transition-all">
+              <textarea
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="输入任务或问题... (Enter 发送)"
+                rows={2}
+                className="bg-transparent text-gray-800 text-sm resize-none outline-none placeholder:text-gray-300 leading-relaxed w-full"
+              />
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1">
-                  <button onClick={() => { setShowSkillSelector(s => !s); setShowFileSelector(false); }} className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${showSkillSelector ? "bg-violet-600/30 text-violet-400" : "hover:bg-white/8 text-white/40 hover:text-white/70"}`} title="选择技能"><Wrench className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => { setShowFileSelector(s => !s); setShowSkillSelector(false); }} className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${showFileSelector ? "bg-violet-600/30 text-violet-400" : "hover:bg-white/8 text-white/40 hover:text-white/70"}`} title="附加文件"><Paperclip className="w-3.5 h-3.5" /></button>
+                  <button
+                    onClick={() => { setShowSkillSelector(s => !s); setShowFileSelector(false); }}
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${showSkillSelector ? "bg-indigo-100 text-indigo-600" : "hover:bg-gray-100 text-gray-400 hover:text-gray-600"}`}
+                    title="选择技能"
+                  ><Wrench className="w-3.5 h-3.5" /></button>
+                  <button
+                    onClick={() => { setShowFileSelector(s => !s); setShowSkillSelector(false); }}
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${showFileSelector ? "bg-indigo-100 text-indigo-600" : "hover:bg-gray-100 text-gray-400 hover:text-gray-600"}`}
+                    title="附加文件"
+                  ><Paperclip className="w-3.5 h-3.5" /></button>
                 </div>
-                <button onClick={() => sendMessage(input)} disabled={!input.trim() || isTyping} className="w-7 h-7 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors">
-                  {isTyping ? <Loader2 className="w-3.5 h-3.5 text-white animate-spin" /> : <Send className="w-3.5 h-3.5 text-white" />}
+                <button
+                  onClick={() => sendMessage(input)}
+                  disabled={!input.trim() || isTyping}
+                  className="w-7 h-7 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                >
+                  {isTyping
+                    ? <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
+                    : <Send className="w-3.5 h-3.5 text-white" />
+                  }
                 </button>
               </div>
             </div>
