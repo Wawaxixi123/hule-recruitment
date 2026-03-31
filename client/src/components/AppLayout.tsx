@@ -7,7 +7,7 @@ import { useLocation } from "wouter";
 import {
   LayoutDashboard, Briefcase, Users, Calendar, Zap,
   BarChart3, Settings, Brain, ChevronLeft, ChevronRight,
-  Bell, Search, LogOut, ChevronDown, Menu, Sparkles
+  Bell, Search, LogOut, ChevronDown, Menu, Sparkles, BookOpen, MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -28,6 +28,8 @@ const navItems = [
   { icon: Users, label: "候选人", path: "/candidates" },
   { icon: Calendar, label: "面试管理", path: "/interviews" },
   { icon: Zap, label: "Skill Hub", path: "/skill-hub" },
+  { icon: BookOpen, label: "知识库", path: "/knowledge" },
+  { icon: MessageSquare, label: "Horo AI", path: "/horo-ai" },
   { icon: BarChart3, label: "数据看板", path: "/analytics" },
   { icon: Settings, label: "设置", path: "/settings" },
 ];

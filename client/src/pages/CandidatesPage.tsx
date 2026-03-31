@@ -13,12 +13,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Upload, Search, Filter, Brain, GitCompare, Star,
   ChevronDown, Sparkles, AlertTriangle, CheckCircle2,
-  SlidersHorizontal, ArrowUpDown, MoreHorizontal, Loader2
+  SlidersHorizontal, ArrowUpDown, MoreHorizontal, Loader2, Mail
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { mockCandidates, mockJobs, type Candidate } from "@/lib/mockData";
+import EmailImportModal from "@/components/EmailImportModal";
 import { toast } from "sonner";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -45,6 +46,7 @@ export default function CandidatesPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [aiScreening, setAiScreening] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [emailImportOpen, setEmailImportOpen] = useState(false);
   const [jobFilter, setJobFilter] = useState("all");
 
   const filtered = mockCandidates
@@ -114,6 +116,15 @@ export default function CandidatesPage() {
               ) : (
                 <><Sparkles className="w-3.5 h-3.5 mr-1.5" />AI批量筛选</>
               )}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+              onClick={() => setEmailImportOpen(true)}
+            >
+              <Mail className="w-3.5 h-3.5 mr-1.5" />
+              邮箱导入
             </Button>
             <Button
               size="sm"
@@ -337,6 +348,7 @@ export default function CandidatesPage() {
           )}
         </div>
       </div>
+      <EmailImportModal open={emailImportOpen} onClose={() => setEmailImportOpen(false)} />
     </AppLayout>
   );
 }
