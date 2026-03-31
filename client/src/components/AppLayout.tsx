@@ -70,6 +70,13 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
     : location.includes("jobs") ? "jobs"
     : "dashboard";
 
+  // 当进入 Horo AI 独立页面时，自动收起右侧侧边对话框
+  useEffect(() => {
+    if (location === "/horo-ai") {
+      setCopilotOpen(false);
+    }
+  }, [location]);
+
   const SidebarContent = () => (
     <>
       {/* Logo */}

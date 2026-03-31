@@ -109,14 +109,14 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* AI Copilot Suggestions */}
+          {/* Horo AI 建议 */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-50 flex items-center gap-2">
                 <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-600 to-cyan-500 flex items-center justify-center">
                   <Brain className="w-3.5 h-3.5 text-white" />
                 </div>
-                <span className="text-sm font-semibold text-gray-900">AI Copilot</span>
+                <span className="text-sm font-semibold text-gray-900">Horo AI 建议</span>
                 <Badge className="ml-auto bg-indigo-50 text-indigo-700 border-indigo-100 text-xs">
                   {aiSuggestions.length - dismissedSuggestions.length} 条建议
                 </Badge>
