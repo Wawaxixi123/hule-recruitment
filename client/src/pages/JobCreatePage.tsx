@@ -19,6 +19,7 @@ import {
   Lightbulb, Shield, TrendingUp
 } from "lucide-react";
 import { toast } from "sonner";
+import BossPublishModal from "@/components/BossPublishModal";
 
 const GENERATED_JD = {
   title: "高级AI产品经理",
@@ -117,6 +118,8 @@ export default function JobCreatePage() {
     setStep("result");
     toast.success("JD生成完成！");
   };
+
+  const [bossModalOpen, setBossModalOpen] = useState(false);
 
   const handleSave = () => {
     toast.success("职位已保存，正在跳转...");
@@ -388,6 +391,15 @@ export default function JobCreatePage() {
                   <Save className="w-3.5 h-3.5 mr-1.5" />
                   保存职位
                 </Button>
+                <Button
+                  size="sm"
+                  className="text-white font-medium"
+                  style={{ background: "#00C8A0" }}
+                  onClick={() => setBossModalOpen(true)}
+                >
+                  <span className="w-4 h-4 rounded flex items-center justify-center text-white text-[10px] font-black mr-1.5" style={{ background: "rgba(0,0,0,0.15)" }}>B</span>
+                  发布到BOSS
+                </Button>
               </div>
             </div>
 
@@ -578,6 +590,14 @@ export default function JobCreatePage() {
                     保存并发布职位
                   </Button>
                   <Button
+                    className="w-full text-white font-semibold"
+                    style={{ background: "#00C8A0" }}
+                    onClick={() => setBossModalOpen(true)}
+                  >
+                    <span className="w-5 h-5 rounded-md flex items-center justify-center text-white text-xs font-black mr-2" style={{ background: "rgba(0,0,0,0.15)" }}>B</span>
+                    一键发布到 BOSS 直聘
+                  </Button>
+                  <Button
                     variant="outline"
                     className="w-full border-gray-200"
                     onClick={handleGenerate}
@@ -599,6 +619,12 @@ export default function JobCreatePage() {
           </div>
         )}
       </div>
+      <BossPublishModal
+        open={bossModalOpen}
+        onClose={() => setBossModalOpen(false)}
+        jobTitle={generatedJD?.title || form.title}
+        jobDescription={generatedJD ? `${generatedJD.responsibilities.join("\n")}` : ""}
+      />
     </AppLayout>
   );
 }
