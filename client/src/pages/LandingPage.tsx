@@ -406,68 +406,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="定价方案" className="py-24 max-w-5xl mx-auto px-6">
-        <div className="text-center mb-14">
-          <h2 className="font-black text-white mb-4" style={{ fontSize: "2.25rem" }}>简单透明的定价</h2>
-          <p style={{ color: "rgba(255,255,255,0.35)" }}>按需选择，随时升级，无隐藏费用</p>
-        </div>
-        <div className="grid md:grid-cols-3 gap-6">
-          {[
-            {
-              name: "基础版", price: "免费", period: "限时开放", highlight: false,
-              features: ["5个招聘岗位", "50份简历解析/月", "基础JD生成", "候选人画像", "邮件简历导入"],
-              cta: "限时免费试用，赠送积分",
-            },
-            {
-              name: "专业版", price: "¥599", period: "/月", highlight: true,
-              features: ["不限招聘岗位", "500份简历解析/月", "Skill Hub全部技能包", "企业知识库（10GB）", "候选人对比Canvas", "面试题生成+复盘", "数据分析看板", "飞书/钉钉集成"],
-              cta: "开始使用专业版",
-            },
-            {
-              name: "企业版", price: "定制", period: "联系我们", highlight: false,
-              features: ["专属私有部署", "不限简历解析量", "自定义技能包开发", "企业知识库（无限）", "API接口对接", "专属客户成功经理", "SLA服务保障"],
-              cta: "联系销售团队",
-            },
-          ].map((plan, i) => (
-            <div
-              key={i}
-              className="relative rounded-2xl p-6"
-              style={plan.highlight
-                ? { background: "rgba(99,102,241,0.12)", border: "2px solid rgba(99,102,241,0.4)" }
-                : { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-              {plan.highlight && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 text-white text-xs font-bold rounded-full" style={{ background: "#4f46e5" }}>最受欢迎</div>
-              )}
-              <div className="mb-5">
-                <p className="text-sm mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>{plan.name}</p>
-                <div className="flex items-baseline gap-1">
-                  <span className="font-black text-white" style={{ fontSize: "1.875rem" }}>{plan.price}</span>
-                  <span className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>{plan.period}</span>
-                </div>
-              </div>
-              <ul className="space-y-2.5 mb-6">
-                {plan.features.map((f, j) => (
-                  <li key={j} className="flex items-center gap-2 text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>
-                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: "#34d399" }} />{f}
-                  </li>
-                ))}
-              </ul>
-              <button
-                onClick={() => navigate("/register")}
-                className="w-full py-2.5 rounded-xl text-sm font-medium transition-all"
-                style={plan.highlight
-                  ? { background: "#4f46e5", color: "white" }
-                  : { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)" }}
-                onMouseEnter={e => { if (plan.highlight) (e.currentTarget as HTMLButtonElement).style.background = "#4338ca"; }}
-                onMouseLeave={e => { if (plan.highlight) (e.currentTarget as HTMLButtonElement).style.background = "#4f46e5"; }}>
-                {plan.cta}
-              </button>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* CTA */}
       <section className="py-24 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
