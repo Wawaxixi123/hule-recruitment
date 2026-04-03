@@ -370,6 +370,68 @@ export default function CandidateDetailPage() {
               </div>
             </div>
 
+            {/* Enneagram Personality */}
+            <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-100 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+                  <Star className="w-3.5 h-3.5 text-white" />
+                </div>
+                <span className="text-sm font-semibold text-gray-900">九型人格评估</span>
+                <span className="text-xs text-gray-400 ml-auto">AI 识别 · 评估岗位匹配度</span>
+              </div>
+              <div className="grid md:grid-cols-2 gap-5">
+                {/* Personality Type Card */}
+                <div className="bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-100 rounded-xl p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xl font-black">3</div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">第三型 · 成就者</p>
+                      <p className="text-xs text-violet-600 font-medium">目标导向 · 高效执行 · 强烈成功欲</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    候选人展现出明显的成就导向特征，善于设定目标并高效推进。在面试中展现出对结果的高度关注和强烈的驱动力，适合需要快速迭代和业务产出的岗位。
+                  </p>
+                </div>
+                {/* Job & Team Match */}
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-medium text-gray-700">岗位匹配度</span>
+                      <span className="text-xs font-bold text-violet-600">88%</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-violet-500 to-purple-500 rounded-full" style={{ width: "88%" }} />
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">高度匹配，成就导向与岗位需求高度吸引</p>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-medium text-gray-700">团队文化匹配</span>
+                      <span className="text-xs font-bold text-emerald-600">82%</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full" style={{ width: "82%" }} />
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">与现有团队文化匹配良好，融入风险低</p>
+                  </div>
+                  <div className="bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                    <p className="text-xs text-amber-700"><span className="font-semibold">注意事项：</span>第三型候选人在工作压力大时可能过度关注外在表现，建议面试中考察其应对失败的方式。</p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <button onClick={() => toast.info("九型人格详细报告即将上线")}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 hover:bg-violet-100 border border-violet-100 rounded-lg text-violet-700 text-xs font-medium transition-colors">
+                  <Star className="w-3 h-3" />查看详细报告
+                </button>
+                <button onClick={() => toast.info("功能即将上线")}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-gray-600 text-xs font-medium transition-colors">
+                  重新识别
+                </button>
+              </div>
+            </div>
+
             {/* AI Conclusion */}
             <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-100 p-5">
               <div className="flex items-center gap-2 mb-3">

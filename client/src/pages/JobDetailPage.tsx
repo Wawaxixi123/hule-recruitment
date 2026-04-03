@@ -12,15 +12,12 @@ import {
 } from "lucide-react";
 import { mockJobs, mockCandidates } from "@/lib/mockData";
 import { useNavigate } from "@/hooks/useNavigate";
-import { useState } from "react";
-import BossPublishModal from "@/components/BossPublishModal";
 
 export default function JobDetailPage() {
   const params = useParams<{ id: string }>();
   const navigate = useNavigate();
   const job = mockJobs.find((j) => j.id === params.id) || mockJobs[0];
   const candidates = mockCandidates.filter((c) => c.jobId === job.id);
-  const [bossModalOpen, setBossModalOpen] = useState(false);
 
   return (
     <AppLayout
@@ -56,15 +53,7 @@ export default function JobDetailPage() {
               <Upload className="w-3.5 h-3.5 mr-1.5" />
               导入简历
             </Button>
-            <Button
-              size="sm"
-              className="text-white font-medium"
-              style={{ background: "#00C8A0" }}
-              onClick={() => setBossModalOpen(true)}
-            >
-              <span className="w-4 h-4 rounded flex items-center justify-center text-white text-[10px] font-black mr-1.5" style={{ background: "rgba(0,0,0,0.15)" }}>B</span>
-              发布到BOSS
-            </Button>
+
           </div>
         </div>
 
@@ -214,12 +203,6 @@ export default function JobDetailPage() {
           </div>
         </div>
       </div>
-      <BossPublishModal
-        open={bossModalOpen}
-        onClose={() => setBossModalOpen(false)}
-        jobTitle={job.title}
-        jobDescription={job.description || ""}
-      />
     </AppLayout>
   );
 }

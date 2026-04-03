@@ -54,7 +54,7 @@ function buildResponse(input: string): Omit<Message, "id" | "timestamp" | "role"
         { id: "t4", label: "输出最终版本", status: "done" },
       ],
       actionCard: { type: "jd", title: "高级AI产品经理 · JD已生成", summary: "已生成包含岗位职责、任职要求、薪酬福利的完整JD，预计吸引力评分 92/100", actionLabel: "查看并编辑JD", actionPath: "/jobs/create" },
-      quickReplies: ["调整薪酬区间", "增加技术要求", "优化福利描述", "一键发布"],
+      quickReplies: ["调整薪酬区间", "增加技术要求", "优化福利描述", "主动获取简历"],
     };
   }
   if (lower.includes("评估") || lower.includes("筛选") || lower.includes("简历")) {

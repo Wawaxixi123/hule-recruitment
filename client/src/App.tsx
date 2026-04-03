@@ -21,6 +21,8 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import SettingsPage from "./pages/SettingsPage";
 import KnowledgePage from "./pages/KnowledgePage";
 import HoroAIPage from "./pages/HoroAIPage";
+import BackgroundCheckPage from "./pages/BackgroundCheckPage";
+import SourcingPage from "./pages/SourcingPage";
 import { AuthProvider } from "./contexts/AuthContext";
 
 function Router() {
@@ -43,6 +45,8 @@ function Router() {
       <Route path="/settings" component={SettingsPage} />
       <Route path="/knowledge" component={KnowledgePage} />
       <Route path="/horo-ai" component={HoroAIPage} />
+      <Route path="/background-check" component={BackgroundCheckPage} />
+      <Route path="/sourcing" component={SourcingPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

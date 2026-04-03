@@ -72,7 +72,7 @@ export default function LoginPage() {
       const ok = await login(loginEmail, loginPwd);
       if (ok) {
         toast.success("登录成功，欢迎回来！");
-        navigate("/dashboard");
+        navigate("/horo-ai");
       }
     } catch {
       toast.error("登录失败，请重试");

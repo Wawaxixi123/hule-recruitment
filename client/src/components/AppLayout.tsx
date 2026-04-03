@@ -7,7 +7,8 @@ import { useLocation } from "wouter";
 import {
   LayoutDashboard, Briefcase, Users, Calendar, Zap,
   BarChart3, Settings, Brain, ChevronLeft, ChevronRight,
-  Bell, Search, LogOut, ChevronDown, Menu, Sparkles, BookOpen, MessageSquare
+  Bell, Search, LogOut, ChevronDown, Menu, Sparkles, BookOpen, MessageSquare,
+  ShieldCheck, Radar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -23,13 +24,15 @@ import { toast } from "sonner";
 import AICopilot from "./AICopilot";
 
 const navItems = [
+  { icon: MessageSquare, label: "Horo AI", path: "/horo-ai", highlight: true },
   { icon: LayoutDashboard, label: "工作台", path: "/dashboard" },
   { icon: Briefcase, label: "职位管理", path: "/jobs" },
+  { icon: Radar, label: "主动获取简历", path: "/sourcing" },
   { icon: Users, label: "候选人", path: "/candidates" },
+  { icon: ShieldCheck, label: "背景调查", path: "/background-check" },
   { icon: Calendar, label: "面试管理", path: "/interviews" },
   { icon: Zap, label: "Skill Hub", path: "/skill-hub" },
   { icon: BookOpen, label: "知识库", path: "/knowledge" },
-  { icon: MessageSquare, label: "Horo AI", path: "/horo-ai" },
   { icon: BarChart3, label: "数据看板", path: "/analytics" },
   { icon: Settings, label: "设置", path: "/settings" },
 ];
@@ -100,12 +103,19 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
               key={item.path}
               onClick={() => { navigate(item.path); setMobileOpen(false); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
-                active ? "bg-indigo-50 text-indigo-700" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                active
+                  ? "bg-indigo-50 text-indigo-700"
+                  : (item as any).highlight
+                    ? "text-indigo-600 hover:bg-indigo-50"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               } ${collapsed ? "justify-center" : ""}`}
               title={collapsed ? item.label : undefined}
             >
-              <item.icon className={`w-4 h-4 flex-shrink-0 ${active ? "text-indigo-600" : ""}`} />
+              <item.icon className={`w-4 h-4 flex-shrink-0 ${active ? "text-indigo-600" : (item as any).highlight ? "text-indigo-500" : ""}`} />
               {!collapsed && <span>{item.label}</span>}
+              {!collapsed && (item as any).highlight && !active && (
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              )}
               {active && !collapsed && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />}
             </button>
           );

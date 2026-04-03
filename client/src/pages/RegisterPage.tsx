@@ -89,7 +89,7 @@ export default function RegisterPage() {
       });
       if (ok) {
         toast.success("注册成功！");
-        navigate("/dashboard");
+        navigate("/horo-ai");
       }
     } catch {
       toast.error("注册失败，请重试");
@@ -118,7 +118,7 @@ export default function RegisterPage() {
       });
       if (ok) {
         toast.success("注册成功！");
-        navigate("/dashboard");
+        navigate("/horo-ai");
       }
     } catch {
       toast.error("注册失败，请重试");
