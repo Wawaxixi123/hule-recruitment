@@ -17,7 +17,7 @@ export default function LoginPage() {
   const [, navigate] = useLocation();
   const { login } = useAuth();
 
-  const [mode, setMode] = useState<LoginMode>("email");
+  const [mode, setMode] = useState<LoginMode>("phone");
 
   // Email mode
   const [email, setEmail] = useState("demo@hule.ai");
@@ -108,7 +108,7 @@ export default function LoginPage() {
             </div>
             <div>
               <div className="text-lg font-bold text-gray-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                葫乐<span className="ai-gradient-text">AI</span>
+                Horo <span className="ai-gradient-text">AI</span>
               </div>
               <div className="text-xs text-gray-400">智能招聘平台</div>
             </div>

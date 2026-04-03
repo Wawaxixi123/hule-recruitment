@@ -17,7 +17,7 @@ type RegisterMode = "email" | "phone";
 export default function RegisterPage() {
   const [, navigate] = useLocation();
   const { register } = useAuth();
-  const [mode, setMode] = useState<RegisterMode>("email");
+  const [mode, setMode] = useState<RegisterMode>("phone");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -151,7 +151,7 @@ export default function RegisterPage() {
             </div>
             <div>
               <div className="text-lg font-bold text-gray-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                葫乐<span className="ai-gradient-text">AI</span>
+                Horo <span className="ai-gradient-text">AI</span>
               </div>
               <div className="text-xs text-gray-400">智能招聘平台</div>
             </div>

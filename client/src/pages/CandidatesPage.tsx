@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Upload, Search, Filter, Brain, GitCompare, Star,
   ChevronDown, Sparkles, AlertTriangle, CheckCircle2,
-  SlidersHorizontal, ArrowUpDown, MoreHorizontal, Loader2, Mail
+  SlidersHorizontal, ArrowUpDown, MoreHorizontal, Loader2, Mail, ShieldCheck
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
@@ -227,6 +227,12 @@ export default function CandidatesPage() {
                 <GitCompare className="w-3.5 h-3.5 mr-1.5" />
                 发起对比
               </Button>
+              <Button size="sm" variant="ghost" className="text-white hover:bg-white/20 h-7" onClick={() => {
+                navigate(`/background-check?candidates=${selected.join(",")}`);
+              }}>
+                <ShieldCheck className="w-3.5 h-3.5 mr-1.5" />
+                发起背景调查
+              </Button>
               <Button size="sm" variant="ghost" className="text-white hover:bg-white/20 h-7" onClick={() => setSelected([])}>
                 清除选择
               </Button>
@@ -327,6 +333,10 @@ export default function CandidatesPage() {
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => navigate("/interviews")}>
                           安排面试
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate(`/background-check?candidate=${c.id}`)}>
+                          <ShieldCheck className="w-3.5 h-3.5 mr-1.5 text-indigo-500" />
+                          发起背景调查
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => toast.success("已加入对比列表")}>
                           加入对比

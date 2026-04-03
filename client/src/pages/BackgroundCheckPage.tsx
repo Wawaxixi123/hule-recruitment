@@ -2,15 +2,17 @@
  * BackgroundCheckPage - 背景调查模块
  * 学历验证支持方案A（学信网在线验证码）和方案B（PDF报告OCR解析）
  */
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   ShieldCheck, Search, CheckCircle2, AlertTriangle, XCircle,
   User, GraduationCap, Briefcase, Phone, Loader2, Plus,
   Clock, FileText, ExternalLink, Upload, Link2, ChevronDown,
-  ChevronUp, Sparkles, Copy, RotateCcw, Info
+  ChevronUp, Sparkles, Copy, RotateCcw, Info, X
 } from "lucide-react";
+import { mockCandidates } from "@/lib/mockData";
 import { toast } from "sonner";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -472,10 +474,111 @@ function EducationVerifyPanel({ candidate }: { candidate: CheckItem }) {
   );
 }
 
+// ─── Initiate Check Modal ─────────────────────────────────────────────────────
+function InitiateCheckModal({ open, onClose, preselectedIds }: {
+  open: boolean;
+  onClose: () => void;
+  preselectedIds: string[];
+}) {
+  const [selCandidates, setSelCandidates] = useState<string[]>([]);
+  const [checkItems, setCheckItems] = useState({ education: true, work: true, contact: false });
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (open) setSelCandidates(preselectedIds);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const toggleC = (id: string) =>
+    setSelCandidates(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+
+  const handleSubmit = async () => {
+    if (selCandidates.length === 0) { toast.error("请至少选择一位候选人"); return; }
+    if (!checkItems.education && !checkItems.work && !checkItems.contact) { toast.error("请至少选择一项调查内容"); return; }
+    setSubmitting(true);
+    await new Promise(r => setTimeout(r, 1200));
+    setSubmitting(false);
+    toast.success(`已为 ${selCandidates.length} 位候选人发起背景调查`);
+    onClose();
+  };
+
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-indigo-600" />
+            <h3 className="text-base font-bold text-gray-900">发起背景调查</h3>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-6 space-y-5">
+          <div>
+            <p className="text-sm font-semibold text-gray-700 mb-2">选择候选人 <span className="text-red-500">*</span></p>
+            <div className="border border-gray-200 rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+              {mockCandidates.slice(0, 8).map(c => (
+                <label key={c.id} className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-gray-50 border-b border-gray-50 last:border-0 ${selCandidates.includes(c.id) ? "bg-indigo-50" : ""}` }>
+                  <Checkbox checked={selCandidates.includes(c.id)} onCheckedChange={() => toggleC(c.id)} />
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-100 to-cyan-100 flex items-center justify-center shrink-0">
+                    <span className="text-xs font-semibold text-indigo-700">{c.name.slice(0, 1)}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">{c.name}</p>
+                    <p className="text-xs text-gray-400 truncate">{c.currentTitle} · {c.currentCompany}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+            {selCandidates.length > 0 && <p className="text-xs text-indigo-600 mt-1.5">已选 {selCandidates.length} 位候选人</p>}
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-700 mb-3">调查项目 <span className="text-red-500">*</span></p>
+            <div className="space-y-2.5">
+              {([
+                { key: "education" as const, label: "学历验证", desc: "学信网在线验证码 / PDF OCR 解析，1:1 字段比对" },
+                { key: "work" as const, label: "工作经历核实", desc: "核实任职公司、职位、在职时间是否与简历一致" },
+                { key: "contact" as const, label: "前司背调联系人", desc: "AI 搜寻候选人前公司 HR 或直属上级联系方式" },
+              ]).map(item => (
+                <label key={item.key} className="flex items-start gap-3 cursor-pointer">
+                  <Checkbox checked={checkItems[item.key]} onCheckedChange={(v: boolean | "indeterminate") => setCheckItems(p => ({ ...p, [item.key]: !!v }))} className="mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">{item.label}</p>
+                    <p className="text-xs text-gray-400">{item.desc}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
+          <Button variant="outline" size="sm" onClick={onClose} className="border-gray-200">取消</Button>
+          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />发起中...</> : <><ShieldCheck className="w-3.5 h-3.5 mr-1.5" />确认发起</>}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function BackgroundCheckPage() {
   const [selected, setSelected] = useState<CheckItem | null>(mockChecks[0]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [initiateOpen, setInitiateOpen] = useState(false);
+  const [preselectedIds, setPreselectedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const cid = params.get("candidate");
+    const cids = params.get("candidates");
+    if (cid) { setPreselectedIds([cid]); setInitiateOpen(true); }
+    else if (cids) { setPreselectedIds(cids.split(",")); setInitiateOpen(true); }
+  }, []);
 
   const filtered = mockChecks.filter(c =>
     !searchQuery || c.candidateName.includes(searchQuery) || c.jobTitle.includes(searchQuery)
@@ -490,7 +593,7 @@ export default function BackgroundCheckPage() {
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-gray-900">调查列表</h2>
               <Button size="sm" className="bg-indigo-600 text-white h-7 text-xs px-2.5"
-                onClick={() => toast.info("发起背景调查功能即将上线")}>
+                onClick={() => { setPreselectedIds([]); setInitiateOpen(true); }}>
                 <Plus className="w-3.5 h-3.5 mr-1" />发起调查
               </Button>
             </div>
@@ -670,6 +773,11 @@ export default function BackgroundCheckPage() {
           )}
         </div>
       </div>
+      <InitiateCheckModal
+        open={initiateOpen}
+        onClose={() => setInitiateOpen(false)}
+        preselectedIds={preselectedIds}
+      />
     </AppLayout>
   );
 }

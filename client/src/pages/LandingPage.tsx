@@ -33,24 +33,24 @@ function Counter({ to, suffix = "", duration = 1800 }: { to: number; suffix?: st
 }
 
 const FEATURES = [
+  { icon: "🤖", title: "Horo AI 助手", desc: "全局AI对话助手，自然语言或快捷按钮发起任务，技能调用可视化，今日动态播报，支持历史对话管理", tag: "AI编排" },
   { icon: "📝", title: "智能JD生成", desc: "输入岗位名称，AI结合公司知识库，30秒生成高质量岗位描述，吸引力评分超90分", tag: "效率提升" },
-  { icon: "📊", title: "简历智能筛选", desc: "批量上传简历，AI多维度语义解析，自动评分排序，精准识别高潜候选人", tag: "精准匹配" },
-  { icon: "👤", title: "候选人画像", desc: "六维雷达图可视化，证据链溯源，每项评分都有原文支撑，评估有据可查", tag: "可解释AI" },
+  { icon: "📊", title: "简历智能筛选", desc: "批量上传简历或邮箱自动导入，AI多维度语义解析，自动评分排序，精准识别高潜候选人", tag: "精准匹配" },
+  { icon: "👤", title: "候选人画像", desc: "六维雷达图可视化 + 九型人格评估，证据链溯源，每项评分都有原文支撑，评估有据可查", tag: "可解释AI" },
   { icon: "⚖️", title: "对比决策Canvas", desc: "多候选人横向对比，差异一目了然，AI给出推荐理由，辅助录用决策", tag: "决策支持" },
   { icon: "❓", title: "面试题生成", desc: "基于候选人简历和岗位要求，生成个性化面试题库，深挖题+风险验证题", tag: "面试提效" },
-  { icon: "🔄", title: "面试复盘", desc: "面试结束后AI自动整理评分，生成结构化复盘报告，支持飞书同步", tag: "复盘智能" },
-  { icon: "🧪", title: "Skill Hub", desc: "60+官方技能包，覆盖各类岗位评估模型，支持自定义权重，打造专属评估体系", tag: "技能定制" },
-  { icon: "📚", title: "企业知识库", desc: "导入公司介绍、文化手册、岗位说明书，AI生成和筛选时自动参考，更贴合实际", tag: "知识沉淀" },
-  { icon: "📧", title: "邮箱简历导入", desc: "对接个人邮箱，自动识别BOSS直聘投递邮件，解析简历并匹配到对应岗位", tag: "无缝接入" },
-  { icon: "📈", title: "数据分析看板", desc: "招聘漏斗、AI效能对比、技能热力图，用数据驱动招聘决策优化", tag: "数据驱动" },
-  { icon: "👥", title: "团队协作", desc: "多角色权限管理，HR/面试官/业务负责人协同，招聘进度实时同步", tag: "高效协作" },
-  { icon: "🤖", title: "Horo AI 助手", desc: "全局AI对话助手，自然语言发起任务，技能调用可视化，支持历史对话管理", tag: "AI编排" },
+  { icon: "🔄", title: "飞书面试复盘", desc: "接入飞书/腾讯视频会议，AI自动转写录音，生成结构化复盘报告，一键归档候选人档案", tag: "复盘智能" },
+  { icon: "🛡️", title: "背景调查", desc: "学信网学历联动验证（在线验证码/PDF OCR双模式），工作经历核实，AI搜寻前司背调联系人", tag: "风险管控" },
+  { icon: "🎯", title: "主动简历获取", desc: "浏览器插件 + RPA Agent 双模式，自动从招聘平台采集候选人简历，批量导入系统", tag: "主动寻访" },
+  { icon: "🧪", title: "Skill Hub", desc: "60+官方技能包，覆盖各类岗位评估模型，支持自然语言自定义权重，打造专属评估体系", tag: "技能定制" },
+  { icon: "📚", title: "企业知识库", desc: "导入公司介绍、文化手册、岗位说明书，AI生成和筛选时自动参考，支持URL自动抓取", tag: "知识沉淀" },
+  { icon: "📈", title: "数据分析看板", desc: "招聘漏斗、AI效能对比、Skill使用效果热力图，用数据驱动招聘决策持续优化", tag: "数据驱动" },
 ];
 
 const TESTIMONIALS = [
-  { name: "张晓雯", title: "某互联网公司 HR总监", avatar: "张", rating: 5, content: "用了葫乐AI之后，我们的简历初筛时间从3天缩短到2小时。最惊艳的是候选人画像功能，每个评分都有原文支撑，跟业务方汇报时底气足多了。" },
-  { name: "李明远", title: "某AI创业公司 招聘负责人", avatar: "李", rating: 5, content: "Skill Hub的技能包设计非常专业，我们针对AI岗位自定义了评估模型，筛选准确率提升了很多。JD生成结合知识库，写出来的内容真的很贴合我们公司的实际情况。" },
-  { name: "王芳芳", title: "某上市公司 人才发展经理", avatar: "王", rating: 5, content: "邮箱导入功能解决了我们最大的痛点，BOSS上的投递邮件自动进来，自动对应岗位，再也不用手动整理了。Horo AI的对话式操作也很自然，学习成本很低。" },
+  { name: "张晓雯", title: "某互联网公司 HR总监", avatar: "张", rating: 5, content: "用了 Horo AI 之后，简历初筛时间从3天缩短到2小时。最惊艳的是候选人画像功能，六维评分加九型人格分析，每项都有原文支撑，跟业务方汇报时底气足多了。" },
+  { name: "李明远", title: "某AI创业公司 招聘负责人", avatar: "李", rating: 5, content: "背景调查模块帮我们省了大量时间，学信网学历验证直接在系统里完成，不用再来回发邮件。Skill Hub 针对AI岗位自定义了评估模型，筛选准确率提升明显。" },
+  { name: "王芳芳", title: "某上市公司 人才发展经理", avatar: "王", rating: 5, content: "邮箱导入和主动简历获取两个功能解决了我们最大的痛点，候选人来源从单一渠道扩展到多平台。Horo AI 的工作台+对话双轨模式，新同事上手很快，学习成本很低。" },
 ];
 
 const STEPS = [
@@ -86,7 +86,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #6366f1, #06b6d4)" }}>
               <Brain className="w-4 h-4 text-white" />
             </div>
-            <span className="text-base font-bold text-white">葫乐AI</span>
+            <span className="text-base font-bold text-white">Horo AI</span>
             <span className="hidden sm:inline text-xs ml-1" style={{ color: "rgba(255,255,255,0.3)" }}>智能招聘平台</span>
           </div>
           <div className="hidden md:flex items-center gap-7">
@@ -147,7 +147,7 @@ export default function LandingPage() {
           </div>
 
           <h1 className="font-black leading-tight mb-6" style={{ fontSize: "clamp(2.5rem, 7vw, 4.5rem)" }}>
-            <span className="text-white">葫乐AI</span>
+            <span className="text-white">Horo AI</span>
             <br />
             <span style={{ background: "linear-gradient(90deg, #818cf8, #22d3ee, #818cf8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundSize: "200% auto", animation: "gradientShift 4s linear infinite" }}>
               智能招聘平台
@@ -155,9 +155,9 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-lg max-w-2xl mx-auto leading-relaxed mb-10" style={{ color: "rgba(255,255,255,0.45)" }}>
-            AI 主导，你来决策。从JD生成、简历筛选、候选人评估、面试题生成到录用决策，
+            AI 主导，你来决策。从JD生成、简历筛选、候选人评估、背景调查到录用决策，
             <br className="hidden sm:block" />
-            全链路 AI 赋能，让每一个招聘决策都有据可查。
+            全链路 AI 赋能，工作台 + AI 问答双轨并行，让每一个招聘决策都有据可查。
           </p>
 
           {/* Demo chat bubble */}
@@ -439,9 +439,9 @@ export default function LandingPage() {
             <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #6366f1, #06b6d4)" }}>
               <Brain className="w-3 h-3 text-white" />
             </div>
-            <span className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>葫乐AI智能招聘平台</span>
+            <span className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>Horo AI 智能招聘平台</span>
           </div>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>© 2024 葫乐科技 · 让每一个招聘决策都有据可查</p>
+          <p className="text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>© 2025 Horo AI · 让每一个招聘决策都有据可查</p>
           <div className="flex items-center gap-5">
             {["隐私政策", "服务条款", "联系我们"].map(item => (
               <a key={item} href="#" className="text-xs transition-colors" style={{ color: "rgba(255,255,255,0.25)" }}
