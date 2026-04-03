@@ -1,19 +1,22 @@
 /**
  * BackgroundCheckPage - 背景调查模块
- * 利用 AI 与外部数据源验证候选人学历真实性，辅助搜寻前司背调联系人
+ * 学历验证支持方案A（学信网在线验证码）和方案B（PDF报告OCR解析）
  */
-import { useState } from "react";
+import { useState, useRef } from "react";
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   ShieldCheck, Search, CheckCircle2, AlertTriangle, XCircle,
   User, GraduationCap, Briefcase, Phone, Loader2, Plus,
-  ChevronRight, Clock, FileText, Star, ExternalLink
+  Clock, FileText, ExternalLink, Upload, Link2, ChevronDown,
+  ChevronUp, Sparkles, Copy, RotateCcw, Info
 } from "lucide-react";
 import { toast } from "sonner";
 
+// ─── Types ───────────────────────────────────────────────────────────────────
 type CheckStatus = "pending" | "running" | "passed" | "warning" | "failed";
+type EduVerifyMethod = "code" | "pdf";
+type EduVerifyState = "idle" | "inputting" | "verifying" | "done_pass" | "done_warn" | "done_fail";
 
 interface CheckItem {
   id: string;
@@ -27,49 +30,34 @@ interface CheckItem {
   riskLevel?: "low" | "medium" | "high";
 }
 
+interface EduRecord {
+  school: string;
+  degree: string;
+  major: string;
+  period: string;
+}
+
+// ─── Mock Data ────────────────────────────────────────────────────────────────
 const mockChecks: CheckItem[] = [
-  {
-    id: "bc1",
-    candidateName: "陈志远",
-    jobTitle: "高级AI产品经理",
-    submittedAt: "2026-04-03 10:30",
-    status: "passed",
-    educationVerified: true,
-    workVerified: true,
-    contactFound: 3,
-    riskLevel: "low",
-  },
-  {
-    id: "bc2",
-    candidateName: "李雨桐",
-    jobTitle: "算法工程师",
-    submittedAt: "2026-04-03 09:15",
-    status: "warning",
-    educationVerified: true,
-    workVerified: false,
-    contactFound: 1,
-    riskLevel: "medium",
-  },
-  {
-    id: "bc3",
-    candidateName: "王浩然",
-    jobTitle: "前端工程师",
-    submittedAt: "2026-04-02 16:45",
-    status: "running",
-    riskLevel: undefined,
-  },
-  {
-    id: "bc4",
-    candidateName: "张晓梅",
-    jobTitle: "数据分析师",
-    submittedAt: "2026-04-02 14:20",
-    status: "failed",
-    educationVerified: false,
-    workVerified: false,
-    contactFound: 0,
-    riskLevel: "high",
-  },
+  { id: "bc1", candidateName: "陈志远", jobTitle: "高级AI产品经理", submittedAt: "2026-04-03 10:30", status: "passed", educationVerified: true, workVerified: true, contactFound: 3, riskLevel: "low" },
+  { id: "bc2", candidateName: "李雨桐", jobTitle: "算法工程师", submittedAt: "2026-04-03 09:15", status: "warning", educationVerified: true, workVerified: false, contactFound: 1, riskLevel: "medium" },
+  { id: "bc3", candidateName: "王浩然", jobTitle: "前端工程师", submittedAt: "2026-04-02 16:45", status: "running", riskLevel: undefined },
+  { id: "bc4", candidateName: "张晓梅", jobTitle: "数据分析师", submittedAt: "2026-04-02 14:20", status: "failed", educationVerified: false, workVerified: false, contactFound: 0, riskLevel: "high" },
 ];
+
+// 候选人简历中的学历记录（用于AI比对）
+const resumeEduRecords: Record<string, EduRecord[]> = {
+  bc1: [
+    { school: "北京大学", degree: "硕士", major: "计算机科学", period: "2015–2018" },
+    { school: "华中科技大学", degree: "学士", major: "软件工程", period: "2011–2015" },
+  ],
+  bc2: [
+    { school: "清华大学", degree: "硕士", major: "人工智能", period: "2016–2019" },
+  ],
+  bc4: [
+    { school: "复旦大学", degree: "学士", major: "统计学", period: "2012–2016" },
+  ],
+};
 
 const statusConfig: Record<CheckStatus, { label: string; color: string; icon: React.ReactNode }> = {
   pending: { label: "待调查", color: "text-gray-500 bg-gray-50 border-gray-200", icon: <Clock className="w-3.5 h-3.5" /> },
@@ -85,6 +73,406 @@ const riskConfig = {
   high: { label: "高风险", color: "text-red-600 bg-red-50" },
 };
 
+// ─── Education Verification Component ────────────────────────────────────────
+function EducationVerifyPanel({ candidate }: { candidate: CheckItem }) {
+  const [method, setMethod] = useState<EduVerifyMethod>("code");
+  const [verifyState, setVerifyState] = useState<EduVerifyState>("idle");
+  const [codeInput, setCodeInput] = useState("");
+  const [uploadedFile, setUploadedFile] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const resumeRecords = resumeEduRecords[candidate.id] || [];
+
+  // 模拟AI验证流程
+  const handleVerify = () => {
+    if (method === "code" && !codeInput.trim()) {
+      toast.error("请输入在线验证码或报告编号");
+      return;
+    }
+    if (method === "pdf" && !uploadedFile) {
+      toast.error("请先上传学信网PDF报告");
+      return;
+    }
+    setVerifyState("verifying");
+    setTimeout(() => {
+      // 模拟不同候选人的结果
+      if (candidate.id === "bc4") {
+        setVerifyState("done_fail");
+      } else if (candidate.id === "bc2") {
+        setVerifyState("done_warn");
+      } else {
+        setVerifyState("done_pass");
+      }
+    }, 3000);
+  };
+
+  const handleReset = () => {
+    setVerifyState("idle");
+    setCodeInput("");
+    setUploadedFile(null);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.name.endsWith(".pdf")) {
+        toast.error("请上传 PDF 格式文件");
+        return;
+      }
+      setUploadedFile(file.name);
+      toast.success(`已选择文件：${file.name}`);
+    }
+  };
+
+  // 学信网AI提取的结果（模拟）
+  const xuexinResult = {
+    name: candidate.candidateName,
+    school: resumeRecords[0]?.school || "北京大学",
+    degree: resumeRecords[0]?.degree || "硕士",
+    major: resumeRecords[0]?.major || "计算机科学",
+    period: resumeRecords[0]?.period || "2015–2018",
+    conclusion: candidate.id === "bc4" ? "未查询到该学历信息" : "毕业",
+  };
+
+  // AI比对结果
+  const compareResult = candidate.id === "bc4"
+    ? { match: false, issues: ["学信网未查询到对应学历记录，疑似伪造"], suggestion: "建议直接淘汰或要求候选人提供原件核验" }
+    : candidate.id === "bc2"
+    ? { match: true, issues: ["专业名称与简历存在轻微差异：学信网显示「人工智能」，简历填写「AI方向」"], suggestion: "差异较小，可接受，建议面试时确认" }
+    : { match: true, issues: [], suggestion: "学历信息与简历完全一致，核验通过" };
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      {/* Header */}
+      <button
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors"
+        onClick={() => setExpanded(v => !v)}
+      >
+        <div className="flex items-center gap-2">
+          <GraduationCap className="w-4 h-4 text-indigo-600" />
+          <span className="text-sm font-semibold text-gray-900">学历验证</span>
+          <span className="text-xs text-gray-400">· 学信网联动</span>
+          {verifyState === "done_pass" && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+          {verifyState === "done_warn" && <AlertTriangle className="w-4 h-4 text-amber-500" />}
+          {verifyState === "done_fail" && <XCircle className="w-4 h-4 text-red-500" />}
+          {verifyState === "verifying" && <Loader2 className="w-4 h-4 text-indigo-500 animate-spin" />}
+        </div>
+        {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+      </button>
+
+      {expanded && (
+        <div className="px-5 pb-5 space-y-4 border-t border-gray-50">
+
+          {/* Resume Records */}
+          <div className="pt-4">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">简历中的学历信息</p>
+            <div className="space-y-2">
+              {resumeRecords.length > 0 ? resumeRecords.map((r, i) => (
+                <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-100">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-700 text-xs font-bold shrink-0">
+                    {r.degree.slice(0, 1)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900">{r.school}</p>
+                    <p className="text-xs text-gray-400">{r.major} · {r.degree} · {r.period}</p>
+                  </div>
+                  {verifyState === "idle" && (
+                    <span className="text-xs text-gray-300 shrink-0">待验证</span>
+                  )}
+                  {verifyState === "verifying" && (
+                    <Loader2 className="w-3.5 h-3.5 text-indigo-400 animate-spin shrink-0" />
+                  )}
+                  {(verifyState === "done_pass") && (
+                    <span className="text-xs text-emerald-600 font-medium flex items-center gap-1 shrink-0"><CheckCircle2 className="w-3.5 h-3.5" />已核实</span>
+                  )}
+                  {(verifyState === "done_warn") && (
+                    <span className="text-xs text-amber-600 font-medium flex items-center gap-1 shrink-0"><AlertTriangle className="w-3.5 h-3.5" />轻微差异</span>
+                  )}
+                  {(verifyState === "done_fail") && (
+                    <span className="text-xs text-red-600 font-medium flex items-center gap-1 shrink-0"><XCircle className="w-3.5 h-3.5" />核实失败</span>
+                  )}
+                </div>
+              )) : (
+                <div className="text-xs text-gray-300 py-3 text-center">简历中暂无学历记录</div>
+              )}
+            </div>
+          </div>
+
+          {/* Verification Method Selector */}
+          {verifyState === "idle" && (
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">选择验证方式</p>
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <button
+                  onClick={() => setMethod("code")}
+                  className={`p-3 rounded-xl border text-left transition-all ${method === "code" ? "bg-indigo-50 border-indigo-300" : "bg-gray-50 border-gray-200 hover:border-indigo-200"}`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Link2 className={`w-4 h-4 ${method === "code" ? "text-indigo-600" : "text-gray-400"}`} />
+                    <span className={`text-xs font-semibold ${method === "code" ? "text-indigo-700" : "text-gray-700"}`}>方案 A · 在线验证码</span>
+                    <span className="text-xs bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full ml-auto">推荐</span>
+                  </div>
+                  <p className="text-xs text-gray-400 leading-relaxed">输入《教育部学历证书电子注册备案表》上的在线验证码或报告编号，AI 自动访问学信网获取结果</p>
+                </button>
+                <button
+                  onClick={() => setMethod("pdf")}
+                  className={`p-3 rounded-xl border text-left transition-all ${method === "pdf" ? "bg-violet-50 border-violet-300" : "bg-gray-50 border-gray-200 hover:border-violet-200"}`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Upload className={`w-4 h-4 ${method === "pdf" ? "text-violet-600" : "text-gray-400"}`} />
+                    <span className={`text-xs font-semibold ${method === "pdf" ? "text-violet-700" : "text-gray-700"}`}>方案 B · PDF 报告</span>
+                    <span className="text-xs bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full ml-auto">快速上线</span>
+                  </div>
+                  <p className="text-xs text-gray-400 leading-relaxed">上传候选人从学信网下载的 PDF 验证报告，AI OCR 解析后与简历自动比对</p>
+                </button>
+              </div>
+
+              {/* Input Area */}
+              {method === "code" ? (
+                <div className="space-y-3">
+                  <div className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 flex items-start gap-2">
+                    <Info className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-700 leading-relaxed">
+                      请告知候选人登录 <span className="font-semibold">学信网（xuexin.chsi.com.cn）</span> 下载《教育部学历证书电子注册备案表》，在报告右上角可找到「在线验证码」（24位字母数字）或「报告编号」。
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-700 mb-1.5 block">在线验证码 / 报告编号</label>
+                    <div className="flex gap-2">
+                      <input
+                        value={codeInput}
+                        onChange={e => setCodeInput(e.target.value.toUpperCase())}
+                        placeholder="例：ABCD1234EFGH5678IJKL9012"
+                        maxLength={32}
+                        className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-900 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 placeholder:text-gray-300 font-mono transition-all"
+                      />
+                      <button
+                        onClick={() => { navigator.clipboard.readText().then(t => setCodeInput(t)).catch(() => toast.info("请手动粘贴验证码")); }}
+                        className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors shrink-0"
+                        title="粘贴"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-300 mt-1">输入后 AI 将模拟访问学信网在线验证页面，提取验证结果</p>
+                  </div>
+                  <Button className="bg-indigo-600 text-white w-full" onClick={handleVerify}>
+                    <Sparkles className="w-4 h-4 mr-1.5" />开始 AI 验证
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="bg-violet-50 border border-violet-100 rounded-xl px-3 py-2.5 flex items-start gap-2">
+                    <Info className="w-3.5 h-3.5 text-violet-500 shrink-0 mt-0.5" />
+                    <p className="text-xs text-violet-700 leading-relaxed">
+                      请告知候选人登录学信网，在「学历查询」中下载 PDF 格式的《教育部学历证书电子注册备案表》，上传后 AI 将进行 OCR 解析并与简历自动比对。
+                    </p>
+                  </div>
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                    {uploadedFile ? (
+                      <div className="flex items-center gap-3 bg-violet-50 border border-violet-200 rounded-xl px-3 py-3">
+                        <FileText className="w-5 h-5 text-violet-600 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{uploadedFile}</p>
+                          <p className="text-xs text-gray-400">PDF 已就绪，点击开始解析</p>
+                        </div>
+                        <button onClick={() => setUploadedFile(null)} className="text-gray-300 hover:text-red-500 transition-colors">
+                          <XCircle className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full border-2 border-dashed border-violet-200 hover:border-violet-400 rounded-xl py-6 flex flex-col items-center gap-2 text-violet-400 hover:text-violet-600 transition-all bg-violet-50/50"
+                      >
+                        <Upload className="w-6 h-6" />
+                        <span className="text-sm font-medium">点击上传学信网 PDF 报告</span>
+                        <span className="text-xs text-gray-300">仅支持 .pdf 格式</span>
+                      </button>
+                    )}
+                  </div>
+                  <Button
+                    className="bg-violet-600 hover:bg-violet-700 text-white w-full"
+                    onClick={handleVerify}
+                    disabled={!uploadedFile}
+                  >
+                    <Sparkles className="w-4 h-4 mr-1.5" />AI OCR 解析并比对
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Verifying State */}
+          {verifyState === "verifying" && (
+            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <Loader2 className="w-5 h-5 text-indigo-600 animate-spin shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-indigo-900">
+                    {method === "code" ? "AI 正在访问学信网验证页面..." : "AI 正在 OCR 解析 PDF 报告..."}
+                  </p>
+                  <p className="text-xs text-indigo-500 mt-0.5">预计需要 10–30 秒</p>
+                </div>
+              </div>
+              <div className="space-y-2.5">
+                {(method === "code" ? [
+                  "正在模拟访问学信网在线验证页面...",
+                  "正在输入验证码并获取网页结果...",
+                  "AI 提取姓名、学校、层次、专业、毕业结论...",
+                  "正在与简历信息进行 1:1 自动比对...",
+                ] : [
+                  "正在解析 PDF 文件结构...",
+                  "AI OCR 识别关键字段（姓名、学校、层次、专业）...",
+                  "提取毕业结论与在校时间...",
+                  "正在与简历信息进行 1:1 自动比对...",
+                ]).map((step, i) => (
+                  <div key={i} className="flex items-center gap-2.5">
+                    <Loader2 className="w-3 h-3 text-indigo-400 animate-spin shrink-0" />
+                    <span className="text-xs text-indigo-600">{step}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Result: Pass */}
+          {verifyState === "done_pass" && (
+            <div className="space-y-3">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  <span className="text-sm font-bold text-emerald-800">学历核验通过</span>
+                  <span className="text-xs text-emerald-600 ml-auto">
+                    {method === "code" ? "学信网在线验证" : "PDF OCR 解析"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  {[
+                    { label: "姓名", resume: candidate.candidateName, xuexin: xuexinResult.name, match: true },
+                    { label: "学校", resume: xuexinResult.school, xuexin: xuexinResult.school, match: true },
+                    { label: "学历层次", resume: xuexinResult.degree, xuexin: xuexinResult.degree, match: true },
+                    { label: "专业", resume: xuexinResult.major, xuexin: xuexinResult.major, match: true },
+                    { label: "在校时间", resume: xuexinResult.period, xuexin: xuexinResult.period, match: true },
+                    { label: "毕业结论", resume: "毕业", xuexin: "毕业", match: true },
+                  ].map((row, i) => (
+                    <div key={i} className="bg-white rounded-lg p-2.5 border border-emerald-100">
+                      <p className="text-xs text-gray-400 mb-1">{row.label}</p>
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-xs font-medium text-gray-700 truncate">{row.resume}</span>
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-emerald-700 bg-emerald-100 rounded-lg px-3 py-2">
+                  <span className="font-semibold">AI 结论：</span>{compareResult.suggestion}
+                </p>
+              </div>
+              <button onClick={handleReset} className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+                <RotateCcw className="w-3.5 h-3.5" />重新验证
+              </button>
+            </div>
+          )}
+
+          {/* Result: Warning */}
+          {verifyState === "done_warn" && (
+            <div className="space-y-3">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-600" />
+                  <span className="text-sm font-bold text-amber-800">学历核验存在差异</span>
+                  <span className="text-xs text-amber-600 ml-auto">
+                    {method === "code" ? "学信网在线验证" : "PDF OCR 解析"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  {[
+                    { label: "姓名", resume: candidate.candidateName, xuexin: candidate.candidateName, match: true },
+                    { label: "学校", resume: "清华大学", xuexin: "清华大学", match: true },
+                    { label: "学历层次", resume: "硕士", xuexin: "硕士", match: true },
+                    { label: "专业", resume: "AI方向", xuexin: "人工智能", match: false },
+                    { label: "在校时间", resume: "2016–2019", xuexin: "2016–2019", match: true },
+                    { label: "毕业结论", resume: "毕业", xuexin: "毕业", match: true },
+                  ].map((row, i) => (
+                    <div key={i} className={`rounded-lg p-2.5 border ${row.match ? "bg-white border-gray-100" : "bg-amber-100 border-amber-200"}`}>
+                      <p className="text-xs text-gray-400 mb-1">{row.label}</p>
+                      <div className="flex items-center justify-between gap-1">
+                        <div className="min-w-0">
+                          <span className="text-xs font-medium text-gray-700 block truncate">简历：{row.resume}</span>
+                          {!row.match && <span className="text-xs text-amber-700 block truncate">学信网：{row.xuexin}</span>}
+                        </div>
+                        {row.match
+                          ? <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+                          : <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+                        }
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-1.5">
+                  {compareResult.issues.map((issue, i) => (
+                    <p key={i} className="text-xs text-amber-700 bg-amber-100 rounded-lg px-3 py-2">
+                      <span className="font-semibold">⚠ 差异：</span>{issue}
+                    </p>
+                  ))}
+                  <p className="text-xs text-gray-600 bg-white rounded-lg px-3 py-2 border border-amber-100">
+                    <span className="font-semibold">AI 建议：</span>{compareResult.suggestion}
+                  </p>
+                </div>
+              </div>
+              <button onClick={handleReset} className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+                <RotateCcw className="w-3.5 h-3.5" />重新验证
+              </button>
+            </div>
+          )}
+
+          {/* Result: Fail */}
+          {verifyState === "done_fail" && (
+            <div className="space-y-3">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <XCircle className="w-5 h-5 text-red-600" />
+                  <span className="text-sm font-bold text-red-800">学历核验异常</span>
+                  <span className="text-xs text-red-500 ml-auto">
+                    {method === "code" ? "学信网在线验证" : "PDF OCR 解析"}
+                  </span>
+                </div>
+                <div className="bg-red-100 rounded-lg px-3 py-3 mb-3">
+                  <p className="text-xs text-red-700 font-semibold mb-1">学信网返回结果</p>
+                  <p className="text-xs text-red-600">未查询到与该验证码/报告对应的学历信息。可能原因：验证码错误、报告已过期或学历信息不存在于教育部数据库。</p>
+                </div>
+                <div className="space-y-1.5">
+                  {compareResult.issues.map((issue, i) => (
+                    <p key={i} className="text-xs text-red-700 bg-red-100 rounded-lg px-3 py-2">
+                      <span className="font-semibold">✗ 异常：</span>{issue}
+                    </p>
+                  ))}
+                  <p className="text-xs text-gray-600 bg-white rounded-lg px-3 py-2 border border-red-100">
+                    <span className="font-semibold">AI 建议：</span>{compareResult.suggestion}
+                  </p>
+                </div>
+              </div>
+              <button onClick={handleReset} className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+                <RotateCcw className="w-3.5 h-3.5" />重新验证
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function BackgroundCheckPage() {
   const [selected, setSelected] = useState<CheckItem | null>(mockChecks[0]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -96,7 +484,7 @@ export default function BackgroundCheckPage() {
   return (
     <AppLayout title="背景调查" breadcrumb={[{ label: "背景调查" }]}>
       <div className="flex h-full" style={{ height: "calc(100vh - 56px)" }}>
-        {/* Left Panel: List */}
+        {/* Left Panel */}
         <div className="w-80 border-r border-gray-100 bg-white flex flex-col shrink-0">
           <div className="p-4 border-b border-gray-100">
             <div className="flex items-center justify-between mb-3">
@@ -139,7 +527,7 @@ export default function BackgroundCheckPage() {
           </div>
         </div>
 
-        {/* Right Panel: Detail */}
+        {/* Right Panel */}
         <div className="flex-1 overflow-y-auto bg-gray-50/30 p-6" style={{ scrollbarWidth: "thin" }}>
           {selected ? (
             <div className="max-w-3xl mx-auto space-y-5">
@@ -185,35 +573,8 @@ export default function BackgroundCheckPage() {
                 </div>
               ) : (
                 <>
-                  {/* Education Verification */}
-                  <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                      <GraduationCap className="w-4 h-4 text-indigo-600" />
-                      <span className="text-sm font-semibold text-gray-900">学历验证</span>
-                      {selected.educationVerified !== undefined && (
-                        selected.educationVerified
-                          ? <CheckCircle2 className="w-4 h-4 text-emerald-500 ml-auto" />
-                          : <XCircle className="w-4 h-4 text-red-500 ml-auto" />
-                      )}
-                    </div>
-                    <div className="space-y-3">
-                      {[
-                        { school: "北京大学", degree: "硕士", major: "计算机科学", period: "2015–2018", verified: selected.educationVerified },
-                        { school: "华中科技大学", degree: "学士", major: "软件工程", period: "2011–2015", verified: selected.educationVerified },
-                      ].map((edu, i) => (
-                        <div key={i} className={`flex items-center justify-between p-3 rounded-xl border ${edu.verified ? "bg-emerald-50 border-emerald-100" : "bg-red-50 border-red-100"}`}>
-                          <div>
-                            <p className="text-sm font-semibold text-gray-900">{edu.school}</p>
-                            <p className="text-xs text-gray-500">{edu.major} · {edu.degree} · {edu.period}</p>
-                          </div>
-                          {edu.verified
-                            ? <span className="text-xs text-emerald-600 font-medium flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />已核实</span>
-                            : <span className="text-xs text-red-600 font-medium flex items-center gap-1"><XCircle className="w-3.5 h-3.5" />核实失败</span>
-                          }
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  {/* Education Verification — Full Interactive Flow */}
+                  <EducationVerifyPanel candidate={selected} />
 
                   {/* Work History Verification */}
                   <div className="bg-white rounded-2xl border border-gray-100 p-5">
@@ -289,14 +650,10 @@ export default function BackgroundCheckPage() {
 
                   {/* Actions */}
                   <div className="flex gap-2">
-                    <Button
-                      className="bg-indigo-600 text-white"
-                      onClick={() => toast.success("背调报告已导出")}
-                    >
+                    <Button className="bg-indigo-600 text-white" onClick={() => toast.success("背调报告已导出")}>
                       <FileText className="w-4 h-4 mr-1.5" />导出背调报告
                     </Button>
-                    <Button variant="outline" className="border-gray-200"
-                      onClick={() => toast.info("功能即将上线")}>
+                    <Button variant="outline" className="border-gray-200" onClick={() => toast.info("功能即将上线")}>
                       <ExternalLink className="w-4 h-4 mr-1.5" />查看候选人画像
                     </Button>
                   </div>

@@ -457,8 +457,8 @@ export default function HoroAIPage() {
             {filteredSessions.map(session => (
               <div key={session.id}
                 className={`group mx-2 mb-1 rounded-xl transition-all ${activeSessionId === session.id ? "bg-indigo-50 border border-indigo-100" : "hover:bg-gray-50"}`}>
-                <button onClick={() => setActiveSessionId(session.id)}
-                  className="w-full text-left px-3 py-2.5 flex items-start gap-2">
+                <div onClick={() => setActiveSessionId(session.id)}
+                  className="w-full text-left px-3 py-2.5 flex items-start gap-2 cursor-pointer">
                   <MessageSquare className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${activeSessionId === session.id ? "text-indigo-500" : "text-gray-300"}`} />
                   <div className="flex-1 min-w-0">
                     <p className={`text-xs font-medium truncate ${activeSessionId === session.id ? "text-indigo-700" : "text-gray-700"}`}>
@@ -476,7 +476,7 @@ export default function HoroAIPage() {
                     className="opacity-0 group-hover:opacity-100 w-5 h-5 rounded flex items-center justify-center text-gray-300 hover:text-red-500 transition-all shrink-0">
                     <Trash2 className="w-3 h-3" />
                   </button>
-                </button>
+                </div>
               </div>
             ))}
           </div>
