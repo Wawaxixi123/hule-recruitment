@@ -18,7 +18,9 @@ import {
 import { mockInterviews, mockCandidates, mockJobs } from "@/lib/mockData";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
-import FeishuConfigModal, { type FeishuConfig } from "@/components/FeishuConfigModal";
+import FeishuConfigModal from "@/components/FeishuConfigModal";
+import { useFeishu } from "@/contexts/FeishuContext";
+import { useLocation as useWouterLocation } from "wouter";
 
 const statusConfig: Record<string, { label: string; className: string; icon: typeof CheckCircle2 }> = {
   scheduled: { label: "已安排", className: "bg-amber-50 text-amber-700 border-amber-200", icon: Clock },
@@ -55,12 +57,15 @@ export default function InterviewsPage() {
   // 视频录制弹窗
   const [videoModal, setVideoModal] = useState<{ open: boolean; interviewId: string; candidateName: string; jobTitle: string; mode: "feishu" | "upload" | null }>({ open: false, interviewId: "", candidateName: "", jobTitle: "", mode: null });
   const [uploadFile, setUploadFile] = useState<string>("");
-  // 飞书配置状态（null = 未配置）
-  const [feishuConfig, setFeishuConfig] = useState<FeishuConfig | null>(null);
+  // 飞书配置状态（全局共享）
+  const { config: feishuConfig } = useFeishu();
   // 飞书配置弹窗（独立，用于未授权时引导配置）
   const [feishuConfigOpen, setFeishuConfigOpen] = useState(false);
   // 未授权提示弹窗
   const [feishuAlertOpen, setFeishuAlertOpen] = useState(false);
+  // 演示用：第一个候选人未配置，第二个候选人已配置（通过内置演示配置实现）
+  const [demoAuthorizedIds] = useState<Set<string>>(new Set(["int-002", "int-003"]));
+  const [, navigateTo] = useWouterLocation();
 
   const filtered = mockInterviews.filter((i) => {
     const matchSearch = i.candidateName.includes(search) || i.jobTitle.includes(search);
@@ -246,14 +251,19 @@ export default function InterviewsPage() {
 
                     {/* 视频录制操作区 */}
                     <div className="mt-3 pt-3 border-t border-gray-50 flex items-center gap-2 flex-wrap">
+                      {/* 演示逻辑：
+                          - int-001 (李明远 HR初面): 未配置飞书 → 弹出提示引导配置
+                          - int-002 (李明远 技术面): 已配置 → 直接创建会议
+                          - 其他: 全局飞书配置状态决定
+                      */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (!feishuConfig) {
-                            // 未配置：打开配置引导弹窗
+                          const isDemo_configured = demoAuthorizedIds.has(interview.id);
+                          const isConfigured = isDemo_configured || (feishuConfig?.authorized ?? false);
+                          if (!isConfigured) {
                             setFeishuAlertOpen(true);
                           } else {
-                            // 已配置：直接打开飞书录制弹窗
                             setVideoModal({ open: true, interviewId: interview.id, candidateName: interview.candidateName, jobTitle: interview.jobTitle, mode: "feishu" });
                           }
                         }}
@@ -261,6 +271,9 @@ export default function InterviewsPage() {
                       >
                         <Video className="w-3.5 h-3.5" />
                         视频录制（飞书自动）
+                        {demoAuthorizedIds.has(interview.id) && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="飞书已授权" />
+                        )}
                       </button>
                       <button
                         onClick={(e) => {
@@ -303,11 +316,11 @@ export default function InterviewsPage() {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => { setFeishuAlertOpen(false); setFeishuConfigOpen(true); }}
+                  onClick={() => { setFeishuAlertOpen(false); navigateTo("/feishu-record"); }}
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors"
                 >
                   <Settings className="w-4 h-4" />
-                  前往配置飞书
+                  前往飞书录制设置
                 </button>
                 <button onClick={() => setFeishuAlertOpen(false)} className="px-4 py-2.5 border border-gray-200 text-gray-600 text-sm rounded-xl hover:bg-gray-50">
                   取消
@@ -322,7 +335,7 @@ export default function InterviewsPage() {
           open={feishuConfigOpen || (videoModal.open && videoModal.mode === "feishu")}
           onClose={() => { setFeishuConfigOpen(false); setVideoModal(v => ({ ...v, open: false })); }}
           config={feishuConfig}
-          onSaveConfig={cfg => setFeishuConfig(cfg)}
+          onSaveConfig={() => {}}
           prefill={{ candidateName: videoModal.candidateName, jobTitle: videoModal.jobTitle }}
           onCreateMeeting={() => { setVideoModal(v => ({ ...v, open: false })); }}
         />
@@ -548,6 +561,67 @@ export default function InterviewsPage() {
                     {interview.feedback}
                   </div>
                 )}
+
+                {/* 视频录制区域 */}
+                <div className="mb-4 bg-slate-50 rounded-xl border border-slate-100 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <Video className="w-3.5 h-3.5 text-indigo-500" />
+                      <span className="text-xs font-semibold text-gray-700">面试录制视频</span>
+                    </div>
+                    {interview.id === "int-001" ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700">
+                        <Clock className="w-2.5 h-2.5" />待同步
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
+                        <CheckCircle2 className="w-2.5 h-2.5" />已同步
+                      </span>
+                    )}
+                  </div>
+                  {interview.id === "int-001" ? (
+                    <div className="px-4 py-4 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
+                        <AlertCircle className="w-5 h-5 text-amber-400" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-600 leading-relaxed">未检测到飞书录制视频，可能尚未配置飞书录制或会议尚未结束。</p>
+                      </div>
+                      <button
+                        onClick={() => setVideoModal({ open: true, interviewId: interview.id, candidateName: interview.candidateName, jobTitle: interview.jobTitle, mode: "upload" })}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex-shrink-0"
+                      >
+                        <Upload className="w-3 h-3" />手动导入
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="px-4 py-3">
+                      {/* 视频播放卡片 */}
+                      <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 mb-3">
+                        <div className="w-14 h-10 bg-gradient-to-br from-indigo-900 to-slate-800 rounded-lg flex items-center justify-center flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => toast.info("视频播放功能即将开放")}>
+                          <PlayCircle className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-semibold text-gray-800 truncate">面试录制视频 · {interview.candidateName}</div>
+                          <div className="text-xs text-gray-400 mt-0.5">录制时长: 1分34秒 · 已同步到 OSS</div>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <button onClick={() => toast.info("视频链接已复制")} className="px-2.5 py-1.5 text-[11px] font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors">查看视频</button>
+                          <button onClick={() => toast.success("Horo AI 正在分析视频...", { description: "预计 2-3 分钟内完成" })} className="px-2.5 py-1.5 text-[11px] font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">发起分析</button>
+                        </div>
+                      </div>
+                      {/* AI 转写摘要 */}
+                      <div className="bg-indigo-50/60 rounded-xl p-3">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Brain className="w-3 h-3 text-indigo-500" />
+                          <span className="text-[11px] font-semibold text-indigo-700">AI 转写摘要</span>
+                          <span className="ml-auto text-[10px] text-indigo-400">分析完成</span>
+                        </div>
+                        <p className="text-xs text-indigo-800 leading-relaxed">候选人表达清晰，对 AI 产品经验丰富，重点介绍了在字节跳动主导的 AI 推荐系统优化项目，通过 A/B 测试将推荐点击率提升 23%。对行业趋势有深刻理解，建议进入技术面。</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* AI Review Generation */}
                 <div className="space-y-3">

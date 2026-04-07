@@ -48,7 +48,15 @@ const navItems: NavItem[] = [
   },
   { icon: Users, label: "候选人", path: "/candidates" },
   { icon: ShieldCheck, label: "背景调查", path: "/background-check" },
-  { icon: Calendar, label: "面试管理", path: "/interviews" },
+  {
+    icon: Calendar,
+    label: "面试管理",
+    path: "/interviews",
+    children: [
+      { icon: Calendar, label: "面试列表", path: "/interviews" },
+      { icon: Video, label: "飞书面试录制", path: "/feishu-record" },
+    ],
+  },
   { icon: Zap, label: "Skill Hub", path: "/skill-hub" },
   { icon: BookOpen, label: "知识库", path: "/knowledge" },
   { icon: BarChart3, label: "数据看板", path: "/analytics" },
@@ -70,7 +78,7 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
   const [copilotOpen, setCopilotOpen] = useState(true);
   const [creditsOpen, setCreditsOpen] = useState(false);
   // 展开的一级菜单（含子菜单的）
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['/sourcing']);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['/sourcing', '/interviews']);
 
   useEffect(() => {
     const stored = localStorage.getItem("hule_user");

@@ -25,7 +25,9 @@ import BackgroundCheckPage from "./pages/BackgroundCheckPage";
 import SourcingPage from "./pages/SourcingPage";
 import EmailImportPage from "./pages/EmailImportPage";
 import VideoRecordPage from "./pages/VideoRecordPage";
+import FeishuRecordPage from "./pages/FeishuRecordPage";
 import { AuthProvider } from "./contexts/AuthContext";
+import { FeishuProvider } from "./contexts/FeishuContext";
 
 function Router() {
   return (
@@ -51,6 +53,7 @@ function Router() {
       <Route path="/sourcing" component={SourcingPage} />
       <Route path="/email-import" component={EmailImportPage} />
       <Route path="/video-record" component={VideoRecordPage} />
+      <Route path="/feishu-record" component={FeishuRecordPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
@@ -62,10 +65,12 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <AuthProvider>
+          <FeishuProvider>
           <TooltipProvider>
             <Toaster />
             <Router />
           </TooltipProvider>
+          </FeishuProvider>
         </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>
