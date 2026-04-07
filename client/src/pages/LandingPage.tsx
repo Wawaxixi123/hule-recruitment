@@ -645,11 +645,19 @@ export default function LandingPage() {
       {authOpen && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)" }}
+          style={{ background: "linear-gradient(135deg, #ede9fe 0%, #ddd6fe 40%, #f5f3ff 100%)" }}
           onClick={e => e.target === e.currentTarget && closeAuth()}
         >
+          {/* Background blobs */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full opacity-40"
+              style={{ background: "radial-gradient(circle, #c4b5fd, #a78bfa)", filter: "blur(60px)" }} />
+            <div className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full opacity-30"
+              style={{ background: "radial-gradient(circle, #818cf8, #6366f1)", filter: "blur(60px)" }} />
+          </div>
+
           <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden"
-            style={{ boxShadow: "0 32px 80px rgba(79,57,246,0.2), 0 4px 20px rgba(0,0,0,0.1)" }}>
+            style={{ boxShadow: "0 32px 80px rgba(79,57,246,0.15), 0 4px 20px rgba(0,0,0,0.08)" }}>
 
             {/* Close */}
             <button
@@ -660,18 +668,19 @@ export default function LandingPage() {
 
             <div className="p-8 pt-10">
               {/* Logo */}
-              <div className="flex flex-col items-center mb-6">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+              <div className="flex flex-col items-center mb-8">
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
                   style={{ background: "linear-gradient(135deg, #7c6af7 0%, #4F39F6 100%)", boxShadow: "0 8px 24px rgba(79,57,246,0.35)" }}>
-                  <Brain className="w-7 h-7 text-white" />
+                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <circle cx="16" cy="16" r="11" stroke="white" strokeWidth="2.5"/>
+                    <path d="M10 16 Q16 10 22 16 Q16 22 10 16Z" fill="white"/>
+                  </svg>
                 </div>
                 <h2 className="text-xl font-bold text-gray-900 mb-1">Horo AI 智能招聘平台</h2>
-                <p className="text-xs text-indigo-500 font-medium mb-3">HORO AI HR</p>
-                {/* 赠送积分引导 */}
-                <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold"
-                  style={{ background: "rgba(79,57,246,0.08)", color: "#4F39F6", border: "1px solid rgba(79,57,246,0.15)" }}>
-                  🎁 注册即赠 30 积分，免费体验所有 AI 功能
-                </div>
+                <p className="text-xs text-indigo-500 font-medium mb-2">HORO AI HR</p>
+                <p className="text-sm text-gray-500 text-center leading-relaxed">
+                  使用手机号验证码或微信登录，继续当前操作
+                </p>
               </div>
 
               {/* Form */}
