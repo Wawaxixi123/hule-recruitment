@@ -1,36 +1,26 @@
 /**
  * Login Page - 登录页
- * 支持两种登录方式：邮箱密码 / 手机验证码
+ * 设计参考：注册登录1.png
+ * 仅支持：手机号验证码 + 微信登录
+ * 风格：白色卡片，渐变紫色背景，品牌色 #4F39F6
  */
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Brain, Eye, EyeOff, ArrowLeft, Loader2, Mail, Phone } from "lucide-react";
+import { Phone, Shield, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-
-type LoginMode = "email" | "phone";
 
 export default function LoginPage() {
   const [, navigate] = useLocation();
   const { login } = useAuth();
 
-  const [mode, setMode] = useState<LoginMode>("phone");
-
-  // Email mode
-  const [email, setEmail] = useState("demo@hule.ai");
-  const [password, setPassword] = useState("demo123");
-  const [showPwd, setShowPwd] = useState(false);
-
-  // Phone mode
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -47,10 +37,7 @@ export default function LoginPage() {
     toast.success(`验证码已发送至 ${phone}`);
     timerRef.current = setInterval(() => {
       setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current!);
-          return 0;
-        }
+        if (prev <= 1) { clearInterval(timerRef.current!); return 0; }
         return prev - 1;
       });
     }, 1000);
@@ -58,18 +45,11 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (mode === "email") {
-      if (!email || !password) { toast.error("请填写邮箱和密码"); return; }
-    } else {
-      if (!phone) { toast.error("请输入手机号"); return; }
-      if (!code) { toast.error("请输入验证码"); return; }
-    }
+    if (!phone) { toast.error("请输入手机号"); return; }
+    if (!code) { toast.error("请输入验证码"); return; }
     setLoading(true);
     try {
-      // For phone mode, use a demo shortcut; for email use real auth
-      const loginEmail = mode === "phone" ? "demo@hule.ai" : email;
-      const loginPwd = mode === "phone" ? "demo123" : password;
-      const ok = await login(loginEmail, loginPwd);
+      const ok = await login("demo@hule.ai", "demo123");
       if (ok) {
         toast.success("登录成功，欢迎回来！");
         navigate("/horo-ai");
@@ -82,182 +62,144 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center p-4">
-      {/* Background decoration */}
+    <div className="min-h-screen flex items-center justify-center p-4"
+      style={{ background: "linear-gradient(135deg, #ede9fe 0%, #ddd6fe 40%, #f5f3ff 100%)" }}>
+
+      {/* Background blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-indigo-100 rounded-full opacity-30 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-cyan-100 rounded-full opacity-30 blur-3xl" />
+        <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full opacity-40 blur-3xl"
+          style={{ background: "radial-gradient(circle, #c4b5fd, #a78bfa)" }} />
+        <div className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full opacity-30 blur-3xl"
+          style={{ background: "radial-gradient(circle, #818cf8, #6366f1)" }} />
       </div>
 
-      <div className="relative w-full max-w-md">
-        {/* Back to landing */}
+      {/* Card */}
+      <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden"
+        style={{ boxShadow: "0 32px 80px rgba(79,57,246,0.15), 0 4px 20px rgba(0,0,0,0.08)" }}>
+
+        {/* Close button */}
         <button
           onClick={() => navigate("/")}
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 mb-6 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          返回首页
-        </button>
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all z-10"
+          style={{ fontSize: "18px" }}
+        >×</button>
 
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+        <div className="p-8 pt-10">
           {/* Logo */}
-          <div className="flex items-center gap-2.5 mb-8">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-cyan-500 flex items-center justify-center">
-              <Brain className="w-5 h-5 text-white" />
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+              style={{ background: "linear-gradient(135deg, #7c6af7 0%, #4F39F6 100%)", boxShadow: "0 8px 24px rgba(79,57,246,0.35)" }}>
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <circle cx="16" cy="16" r="11" stroke="white" strokeWidth="2.5"/>
+                <path d="M10 16 Q16 10 22 16 Q16 22 10 16Z" fill="white"/>
+              </svg>
             </div>
-            <div>
-              <div className="text-lg font-bold text-gray-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                Horo <span className="ai-gradient-text">AI</span>
-              </div>
-              <div className="text-xs text-gray-400">智能招聘平台</div>
-            </div>
-          </div>
-
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">欢迎回来</h1>
-          <p className="text-sm text-gray-500 mb-6">登录您的账户，继续智能招聘之旅</p>
-
-          {/* Mode Tabs */}
-          <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
-            <button
-              type="button"
-              onClick={() => setMode("email")}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all ${
-                mode === "email"
-                  ? "bg-white text-indigo-700 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <Mail className="w-3.5 h-3.5" />
-              邮箱登录
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("phone")}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all ${
-                mode === "phone"
-                  ? "bg-white text-indigo-700 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <Phone className="w-3.5 h-3.5" />
-              手机验证码
-            </button>
-          </div>
-
-          <form onSubmit={handleLogin} className="space-y-5">
-            {mode === "email" ? (
-              <>
-                <div className="space-y-1.5">
-                  <Label htmlFor="email" className="text-sm font-medium text-gray-700">邮箱</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    className="h-11 border-gray-200 focus:border-indigo-400"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="text-sm font-medium text-gray-700">密码</Label>
-                    <button type="button" className="text-xs text-indigo-600 hover:text-indigo-700">
-                      忘记密码？
-                    </button>
-                  </div>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPwd ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="输入密码"
-                      className="h-11 border-gray-200 focus:border-indigo-400 pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPwd(!showPwd)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="space-y-1.5">
-                  <Label htmlFor="phone" className="text-sm font-medium text-gray-700">手机号</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))}
-                    placeholder="请输入手机号"
-                    className="h-11 border-gray-200 focus:border-indigo-400"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="code" className="text-sm font-medium text-gray-700">验证码</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="code"
-                      type="text"
-                      value={code}
-                      onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      placeholder="请输入6位验证码"
-                      className="h-11 border-gray-200 focus:border-indigo-400 flex-1"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleSendCode}
-                      disabled={countdown > 0}
-                      className={`h-11 px-4 rounded-xl text-sm font-medium whitespace-nowrap transition-all border ${
-                        countdown > 0
-                          ? "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
-                          : "bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100"
-                      }`}
-                    >
-                      {countdown > 0 ? `${countdown}s` : "获取验证码"}
-                    </button>
-                  </div>
-                  {codeSent && countdown > 0 && (
-                    <p className="text-xs text-gray-400">验证码已发送，请注意查收短信</p>
-                  )}
-                </div>
-              </>
-            )}
-
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-lg shadow-indigo-100"
-            >
-              {loading ? (
-                <><Loader2 className="mr-2 w-4 h-4 animate-spin" />登录中...</>
-              ) : "登录"}
-            </Button>
-          </form>
-
-          {/* Demo hint */}
-          <div className="mt-4 p-3 bg-indigo-50 rounded-xl border border-indigo-100">
-            <p className="text-xs text-indigo-700 text-center">
-              <span className="font-semibold">演示账号：</span>demo@hule.ai / demo123
-              <span className="mx-2 text-indigo-300">|</span>
-              手机号任意输入验证码 <span className="font-semibold">123456</span>
+            <h1 className="text-xl font-bold text-gray-900 mb-1.5">登录 HORO AI Agent</h1>
+            <p className="text-sm text-gray-500 text-center leading-relaxed">
+              使用手机号验证码或微信登录，继续当前操作
             </p>
           </div>
 
-          <div className="mt-6 text-center">
-            <span className="text-sm text-gray-500">还没有账号？</span>
+          {/* Form */}
+          <form onSubmit={handleLogin} className="space-y-4">
+            {/* Phone */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-gray-700">手机号</Label>
+              <div className="relative">
+                <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  type="tel"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))}
+                  placeholder="请输入手机号"
+                  className="h-12 pl-10 border-gray-200 rounded-xl focus:border-indigo-400 bg-gray-50 focus:bg-white transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Code */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-gray-700">验证码</Label>
+              <div className="flex gap-2.5">
+                <div className="relative flex-1">
+                  <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    value={code}
+                    onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="请输入验证码"
+                    className="h-12 pl-10 border-gray-200 rounded-xl focus:border-indigo-400 bg-gray-50 focus:bg-white transition-colors"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSendCode}
+                  disabled={countdown > 0}
+                  className="h-12 px-4 rounded-xl text-sm font-semibold whitespace-nowrap transition-all border"
+                  style={countdown > 0 ? {
+                    background: "#f9fafb", color: "#9ca3af", borderColor: "#e5e7eb", cursor: "not-allowed"
+                  } : {
+                    background: "#fff", color: "#4F39F6", borderColor: "#4F39F6", cursor: "pointer"
+                  }}
+                >
+                  {countdown > 0 ? `${countdown}s` : "获取验证码"}
+                </button>
+              </div>
+              {codeSent && countdown > 0 && (
+                <p className="text-xs text-gray-400">验证码已发送，请注意查收短信</p>
+              )}
+            </div>
+
+            {/* Login Button */}
             <button
-              onClick={() => navigate("/register")}
-              className="ml-1 text-sm text-indigo-600 font-semibold hover:text-indigo-700"
+              type="submit"
+              disabled={loading}
+              className="w-full h-12 rounded-xl text-white font-semibold text-base flex items-center justify-center gap-2 transition-all mt-2"
+              style={{
+                background: "linear-gradient(135deg, #9b8af8 0%, #4F39F6 100%)",
+                boxShadow: "0 4px 16px rgba(79,57,246,0.35)",
+                opacity: loading ? 0.8 : 1,
+              }}
             >
-              免费注册
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              登录 / 注册 →
             </button>
+          </form>
+
+          {/* Demo hint */}
+          <div className="mt-3 p-2.5 rounded-xl border text-center"
+            style={{ background: "#f5f3ff", borderColor: "#ddd6fe" }}>
+            <p className="text-xs" style={{ color: "#6d28d9" }}>
+              演示：任意手机号 + 验证码 <span className="font-bold">123456</span>
+            </p>
           </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px bg-gray-100" />
+            <span className="text-xs text-gray-400">或</span>
+            <div className="flex-1 h-px bg-gray-100" />
+          </div>
+
+          {/* WeChat Login */}
+          <button
+            type="button"
+            onClick={() => toast.info("微信登录功能即将上线")}
+            className="w-full h-12 rounded-xl border border-gray-200 bg-white text-gray-700 font-medium text-sm flex items-center justify-center gap-2.5 transition-all hover:border-green-400 hover:text-green-700"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#07c160">
+              <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.16 10.16 0 002.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178A1.17 1.17 0 014.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178 1.17 1.17 0 01-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 01.598.082l1.584.926a.272.272 0 00.14.047c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 01-.023-.156.49.49 0 01.201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-7.062-6.122zm-3.318 2.187c.537 0 .972.44.972.982a.976.976 0 01-.972.983.976.976 0 01-.972-.983c0-.542.435-.982.972-.982zm6.63 0c.537 0 .972.44.972.982a.976.976 0 01-.972.983.976.976 0 01-.972-.983c0-.542.435-.982.972-.982z"/>
+            </svg>
+            微信登录
+          </button>
+
+          {/* Terms */}
+          <p className="text-center text-xs text-gray-400 mt-5">
+            登录即代表同意
+            <a href="#" className="text-indigo-500 hover:text-indigo-600 mx-0.5">《用户协议》</a>
+            和
+            <a href="#" className="text-indigo-500 hover:text-indigo-600 mx-0.5">《隐私政策》</a>
+          </p>
         </div>
       </div>
     </div>

@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Briefcase, Users, Calendar, Zap,
   BarChart3, Settings, Brain, ChevronLeft, ChevronRight,
   Bell, Search, LogOut, ChevronDown, Menu, Sparkles, BookOpen, MessageSquare,
-  ShieldCheck, Radar
+  ShieldCheck, Radar, Mail, Video, Coins
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -22,15 +22,18 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import AICopilot from "./AICopilot";
+import CreditsModal from "./CreditsModal";
 
 const navItems = [
   { icon: MessageSquare, label: "Horo AI", path: "/horo-ai", highlight: true },
   { icon: LayoutDashboard, label: "工作台", path: "/dashboard" },
   { icon: Briefcase, label: "职位管理", path: "/jobs" },
   { icon: Radar, label: "主动获取简历", path: "/sourcing" },
+  { icon: Mail, label: "邮箱简历导入", path: "/email-import" },
   { icon: Users, label: "候选人", path: "/candidates" },
   { icon: ShieldCheck, label: "背景调查", path: "/background-check" },
   { icon: Calendar, label: "面试管理", path: "/interviews" },
+  { icon: Video, label: "视频录制", path: "/video-record" },
   { icon: Zap, label: "Skill Hub", path: "/skill-hub" },
   { icon: BookOpen, label: "知识库", path: "/knowledge" },
   { icon: BarChart3, label: "数据看板", path: "/analytics" },
@@ -50,6 +53,7 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
   const [mobileOpen, setMobileOpen] = useState(false);
   // Horo AI 默认常驻展开
   const [copilotOpen, setCopilotOpen] = useState(true);
+  const [creditsOpen, setCreditsOpen] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("hule_user");
@@ -88,8 +92,8 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
           <Brain className="w-4 h-4 text-white" />
         </div>
         {!collapsed && (
-          <span className="text-base font-bold text-gray-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-            葫乐<span className="ai-gradient-text">AI</span>
+            <span className="text-base font-bold text-gray-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            Horo <span className="ai-gradient-text">AI</span>
           </span>
         )}
       </div>
@@ -230,6 +234,14 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
             <Button variant="ghost" size="icon" className="w-8 h-8 text-gray-500 hover:text-gray-700">
               <Search className="w-4 h-4" />
             </Button>
+            {/* Credits button */}
+            <button
+              onClick={() => setCreditsOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-100 transition-all"
+            >
+              <Coins className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">30 积分</span>
+            </button>
             <Button variant="ghost" size="icon" className="w-8 h-8 text-gray-500 hover:text-gray-700 relative">
               <Bell className="w-4 h-4" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
@@ -259,6 +271,9 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
           {children}
         </main>
       </div>
+
+      {/* Credits Modal */}
+      <CreditsModal open={creditsOpen} onClose={() => setCreditsOpen(false)} currentCredits={30} isNewUser={true} />
 
       {/* Horo AI Panel — always mounted, shown/hidden */}
       <AICopilot
