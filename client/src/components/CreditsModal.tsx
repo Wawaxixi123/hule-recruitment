@@ -15,10 +15,10 @@ interface Props {
 }
 
 const PACKAGES = [
-  { id: "trial", name: "体验包", credits: 50, price: 29.9 },
-  { id: "standard", name: "标准包", credits: 200, price: 59 },
-  { id: "pro", name: "专业包", credits: 500, price: 99 },
-  { id: "enterprise", name: "企业包", credits: 2000, price: 299 },
+  { id: "trial", name: "体验包", credits: 100, price: 29.9 },
+  { id: "standard", name: "标准包", credits: 400, price: 59 },
+  { id: "pro", name: "专业包", credits: 1000, price: 99 },
+  { id: "enterprise", name: "企业包", credits: 4000, price: 299 },
 ];
 
 type PayMethod = "wechat" | "alipay";
