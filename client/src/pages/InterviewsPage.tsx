@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input";
 import {
   Calendar, Clock, Users, Plus, Search, Filter,
   ChevronRight, CheckCircle2, AlertCircle, Sparkles,
-  Video, MapPin, Phone, Brain, FileText, Star
+  Video, MapPin, Phone, Brain, FileText, Star,
+  Upload, PlayCircle, X
 } from "lucide-react";
 import { mockInterviews, mockCandidates, mockJobs } from "@/lib/mockData";
 import { Download } from "lucide-react";
@@ -50,6 +51,9 @@ export default function InterviewsPage() {
   const [questionsGenerated, setQuestionsGenerated] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
   const [scores, setScores] = useState<Record<number, number>>({});
+  // 视频录制弹窗
+  const [videoModal, setVideoModal] = useState<{ open: boolean; interviewId: string; candidateName: string; mode: "feishu" | "upload" | null }>({ open: false, interviewId: "", candidateName: "", mode: null });
+  const [uploadFile, setUploadFile] = useState<string>("");
 
   const filtered = mockInterviews.filter((i) => {
     const matchSearch = i.candidateName.includes(search) || i.jobTitle.includes(search);
@@ -215,6 +219,30 @@ export default function InterviewsPage() {
                       )}
                     </div>
 
+                    {/* 视频录制操作区 */}
+                    <div className="mt-3 pt-3 border-t border-gray-50 flex items-center gap-2 flex-wrap">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setVideoModal({ open: true, interviewId: interview.id, candidateName: interview.candidateName, mode: "feishu" });
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+                      >
+                        <Video className="w-3.5 h-3.5" />
+                        视频录制（飞书自动）
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setVideoModal({ open: true, interviewId: interview.id, candidateName: interview.candidateName, mode: "upload" });
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        手动导入视频
+                      </button>
+                    </div>
+
                     {interview.feedback && (
                       <div className="mt-3 bg-gray-50 rounded-xl p-2.5 text-xs text-gray-600">
                         {interview.feedback}
@@ -223,6 +251,111 @@ export default function InterviewsPage() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* 视频录制弹窗 */}
+        {videoModal.open && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setVideoModal(v => ({ ...v, open: false }))}>
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900">
+                    {videoModal.mode === "feishu" ? "飞书视频录制" : "手动导入视频"}
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-0.5">候选人：{videoModal.candidateName}</p>
+                </div>
+                <button onClick={() => setVideoModal(v => ({ ...v, open: false }))} className="p-1.5 rounded-lg hover:bg-gray-100">
+                  <X className="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
+
+              {videoModal.mode === "feishu" ? (
+                <div className="space-y-4">
+                  <div className="bg-indigo-50 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Video className="w-4 h-4 text-indigo-600" />
+                      <span className="text-sm font-medium text-indigo-800">飞书视频会议自动录制</span>
+                    </div>
+                    <p className="text-xs text-indigo-600 leading-relaxed">
+                      Horo AI 将自动创建飞书视频会议，面试结束后自动拉取录制文件并生成 AI 分析报告。
+                    </p>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1.5">面试时间</label>
+                      <input type="datetime-local" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1.5">面试时长（分钟）</label>
+                      <input type="number" defaultValue="60" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1.5">候选人邮箱（发送会议链接）</label>
+                      <input type="email" placeholder="candidate@example.com" className="w-full h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      onClick={() => { toast.success("飞书会议已创建，邀请链接已发送给候选人"); setVideoModal(v => ({ ...v, open: false })); }}
+                      className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors"
+                    >
+                      创建会议并发送邀请
+                    </button>
+                    <button onClick={() => setVideoModal(v => ({ ...v, open: false }))} className="px-4 py-2.5 border border-gray-200 text-gray-600 text-sm rounded-xl hover:bg-gray-50">
+                      取消
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Upload className="w-4 h-4 text-gray-600" />
+                      <span className="text-sm font-medium text-gray-800">上传本地录制视频</span>
+                    </div>
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                      支持 MP4、MOV、AVI 格式，上传后 Horo AI 将自动转录并生成面试分析报告。
+                    </p>
+                  </div>
+
+                  <div
+                    className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-all"
+                    onClick={() => { setUploadFile("面试录制_" + videoModal.candidateName + ".mp4"); toast.info("已选择文件"); }}
+                  >
+                    {uploadFile ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <PlayCircle className="w-5 h-5 text-indigo-600" />
+                        <span className="text-sm text-indigo-700 font-medium">{uploadFile}</span>
+                      </div>
+                    ) : (
+                      <div>
+                        <Upload className="w-8 h-8 mx-auto text-gray-300 mb-2" />
+                        <p className="text-sm text-gray-500">点击选择视频文件</p>
+                        <p className="text-xs text-gray-400 mt-1">MP4 / MOV / AVI，最大 2 GB</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        if (!uploadFile) { toast.warning("请先选择视频文件"); return; }
+                        toast.success("视频上传成功，Horo AI 正在分析...");
+                        setVideoModal(v => ({ ...v, open: false }));
+                        setUploadFile("");
+                      }}
+                      className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors"
+                    >
+                      上传并分析
+                    </button>
+                    <button onClick={() => { setVideoModal(v => ({ ...v, open: false })); setUploadFile(""); }} className="px-4 py-2.5 border border-gray-200 text-gray-600 text-sm rounded-xl hover:bg-gray-50">
+                      取消
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

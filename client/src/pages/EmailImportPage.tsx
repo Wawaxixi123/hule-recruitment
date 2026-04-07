@@ -1,210 +1,158 @@
 /**
- * EmailImportPage - 邮箱简历导入
- * 参考设计：绑定163邮箱说明.webp / 绑定qq邮箱说明.png / 邮箱简历导入.webp
- * 布局：左侧连接邮箱配置 + 右侧已连接邮箱；下方候选人简历列表 + 批量操作
+ * EmailImportPage - 邮箱简历导入（重构版）
+ * 邮箱配置区域可收起；简历列表为核心；状态分"待处理/已分析"；
+ * 批量操作：发送到 Horo AI 分析 / 导入候选人库
  */
 import { useState } from "react";
+import { useLocation } from "wouter";
 import AppLayout from "@/components/AppLayout";
-import { Mail, RefreshCw, Upload, Trash2, BarChart2, CheckSquare, Square, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Mail, ChevronDown, ChevronUp, RefreshCw, Trash2,
+  MessageSquare, Users, FileText, Search, Plus,
+  CheckCircle2, Clock, Inbox, AlertCircle
+} from "lucide-react";
 import { toast } from "sonner";
 
-type EmailType = "126" | "163" | "company" | "qq";
+type EmailType = "163" | "126" | "company" | "qq";
 
-interface EmailConfig {
-  type: EmailType;
-  label: string;
-  host: string;
-  port: string;
-  instructions: React.ReactNode;
-}
-
-const EMAIL_CONFIGS: EmailConfig[] = [
-  {
-    type: "126",
-    label: "网易 126",
-    host: "imap.126.com",
-    port: "993",
-    instructions: (
-      <div className="space-y-2 text-sm text-gray-600">
-        <p>• 先去邮箱设置里开启 IMAP，并生成客户端授权码；该建议不要直接填写网页登录密码。</p>
-        <p>• 邮箱地址通常就是 IMAP 用户名；默认 Host、Port、SSL 已经按常见配置预填好了。</p>
-        <p>• 密码栏请填写客户端授权码；同步文件夹一般填 INBOX，或者你专门收简历的文件夹名。</p>
-        <p>• 首次导入范围表示第一次同步最近多少天邮件；后续再点同步时会按增量拉取新邮件。</p>
-      </div>
-    ),
-  },
-  {
-    type: "163",
+const EMAIL_CONFIGS: Record<EmailType, { label: string; host: string; port: string; hint: string }> = {
+  "163": {
     label: "网易 163",
     host: "imap.163.com",
     port: "993",
-    instructions: (
-      <div className="space-y-2 text-sm text-gray-600">
-        <p>• 先去邮箱设置里开启 IMAP，并生成客户端授权码；该建议不要直接填写网页登录密码。</p>
-        <p>• 邮箱地址通常就是 IMAP 用户名；默认 Host、Port、SSL 已经按常见配置预填好了。</p>
-        <p>• 密码栏请填写客户端授权码；同步文件夹一般填 INBOX，或者你专门收简历的文件夹名。</p>
-        <p>• 首次导入范围表示第一次同步最近多少天邮件；后续再点同步时会按增量拉取新邮件。</p>
-      </div>
-    ),
+    hint: "• 先去邮箱设置里开启 IMAP，并生成客户端授权码；建议不要直接填写网页登录密码。\n• 邮箱地址通常就是 IMAP 用户名；默认 Host、Port、SSL 已经按常见配置预填好了。\n• 密码栏请填写客户端授权码；同步文件夹一般填 INBOX，或者你专门收简历的文件夹名。\n• 首次导入范围表示第一次同步最近多少天邮件；后续再点同步时会按增量拉取新邮件。",
   },
-  {
-    type: "company",
-    label: "公司邮箱 / 其他邮箱",
-    host: "",
+  "126": {
+    label: "网易 126",
+    host: "imap.126.com",
     port: "993",
-    instructions: (
-      <div className="space-y-2 text-sm text-gray-600">
-        <p>• 进企业微信邮箱 → 收发信设置 → 找「开启 IMAP/SMTP 服务」并开启</p>
-        <p>• 微信绑定 → 开启安全登录 → 生成新密码</p>
-        <p>• 生成「客户端专用密码」（不是登录密码）</p>
-        <p>• 把生成的专用密码填到这里的密码栏</p>
-      </div>
-    ),
+    hint: "• 先去邮箱设置里开启 IMAP，并生成客户端授权码；建议不要直接填写网页登录密码。\n• 邮箱地址通常就是 IMAP 用户名；默认 Host、Port、SSL 已经按常见配置预填好了。\n• 密码栏请填写客户端授权码；同步文件夹一般填 INBOX，或者你专门收简历的文件夹名。\n• 首次导入范围表示第一次同步最近多少天邮件；后续再点同步时会按增量拉取新邮件。",
   },
-  {
-    type: "qq",
+  "qq": {
     label: "QQ 邮箱",
     host: "imap.qq.com",
     port: "993",
-    instructions: (
-      <div className="space-y-2 text-sm text-gray-600">
-        <p>• 先去邮箱设置里开启 IMAP，并生成客户端授权码；该建议不要直接填写网页登录密码。</p>
-        <p>• 邮箱地址通常就是 IMAP 用户名；默认 Host、Port、SSL 已经按常见配置预填好了。</p>
-        <p>• 密码栏请填写客户端授权码；同步文件夹一般填 INBOX，或者你专门收简历的文件夹名。</p>
-        <p>• 首次导入范围表示第一次同步最近多少天邮件；后续再点同步时会按增量拉取新邮件。</p>
-      </div>
-    ),
+    hint: "• 先去邮箱设置里开启 IMAP，并生成客户端授权码；建议不要直接填写网页登录密码。\n• 邮箱地址通常就是 IMAP 用户名；默认 Host、Port、SSL 已经按常见配置预填好了。\n• 密码栏请填写客户端授权码；同步文件夹一般填 INBOX，或者你专门收简历的文件夹名。\n• 首次导入范围表示第一次同步最近多少天邮件；后续再点同步时会按增量拉取新邮件。",
   },
-];
+  "company": {
+    label: "公司邮箱 / 其他",
+    host: "",
+    port: "993",
+    hint: "1. 进企业微信邮箱 → 收发信设置 → 找「开启 IMAP/SMTP 服务」并开启\n2. 微信绑定 → 开启安全登录 → 生成新密码\n3. 生成「客户端专用密码」（不是登录密码）\n4. 把生成的专用密码填到这里的密码栏",
+  },
+};
 
-interface ConnectedEmail {
-  id: string;
-  type: EmailType;
-  label: string;
-  email: string;
-  folder: string;
-  host: string;
-  port: string;
-  status: "active" | "error";
-  lastSync: string;
-  syncDays: number;
-  scanned: number;
-  imported: number;
-  attachments: number;
-}
+type ResumeStatus = "pending" | "analyzed";
 
-interface ResumeItem {
+interface EmailResume {
   id: string;
   name: string;
   fileName: string;
   fileSize: string;
-  importTime: string;
-  receiveTime: string;
-  status: "pending" | "analyzed" | "archived";
-  source: "email" | "manual";
-  emailSubject?: string;
-  sender?: string;
-  snippet?: string;
+  emailSubject: string;
+  sender: string;
+  receivedAt: string;
+  importedAt: string;
+  status: ResumeStatus;
+  source: string;
 }
 
-const mockConnected: ConnectedEmail[] = [
+const MOCK_RESUMES: EmailResume[] = [
   {
-    id: "1",
-    type: "163",
-    label: "网易 163",
-    email: "13822362481@163.com",
-    folder: "INBOX",
-    host: "imap.163.com",
-    port: "993",
-    status: "active",
-    lastSync: "2026/04/03 19:35",
-    syncDays: 30,
-    scanned: 5,
-    imported: 1,
-    attachments: 1,
+    id: "1", name: "张明远", fileName: "张明远-产品经理简历.pdf", fileSize: "560 KB",
+    emailSubject: "应聘产品经理岗位 - 张明远", sender: "zhangmingyuan@163.com",
+    receivedAt: "2026/04/07 09:36", importedAt: "2026/04/07 09:41",
+    status: "analyzed", source: "网易 163",
+  },
+  {
+    id: "2", name: "李思雨", fileName: "李思雨-游戏UI实习生.pdf", fileSize: "6.4 KB",
+    emailSubject: "Fw: 广州美术学院-李思雨-游戏UI实习生", sender: "工具人-土耳其 <gongjurenhuerqi@10m.com.cn>",
+    receivedAt: "2026/04/04 03:42", importedAt: "2026/04/04 03:42",
+    status: "pending", source: "网易 163",
+  },
+  {
+    id: "3", name: "王浩然", fileName: "王浩然-后端工程师.docx", fileSize: "6.4 KB",
+    emailSubject: "应聘后端工程师 - 王浩然", sender: "wanghaoran@qq.com",
+    receivedAt: "2026/04/04 03:41", importedAt: "2026/04/04 03:41",
+    status: "pending", source: "QQ 邮箱",
+  },
+  {
+    id: "4", name: "陈晓燕", fileName: "陈晓燕-前端开发简历.pdf", fileSize: "320 KB",
+    emailSubject: "应聘前端开发工程师", sender: "chenxiaoyan@company.com",
+    receivedAt: "2026/04/03 16:20", importedAt: "2026/04/03 16:25",
+    status: "analyzed", source: "公司邮箱",
+  },
+  {
+    id: "5", name: "刘子轩", fileName: "刘子轩-UI设计师.pdf", fileSize: "1.2 MB",
+    emailSubject: "应聘UI设计师岗位 - 刘子轩", sender: "liuzixuan@126.com",
+    receivedAt: "2026/04/03 11:05", importedAt: "2026/04/03 11:10",
+    status: "pending", source: "网易 126",
   },
 ];
 
-const mockResumes: ResumeItem[] = [
-  {
-    id: "1",
-    name: "叶——述职材料",
-    fileName: "叶——述职材料.docx",
-    fileSize: "6.4 KB",
-    importTime: "2026/04/04 03:42",
-    receiveTime: "2026/04/04 03:42",
-    status: "pending",
-    source: "manual",
-  },
-  {
-    id: "2",
-    name: "叶——述职材料",
-    fileName: "叶——述职材料.docx",
-    fileSize: "6.4 KB",
-    importTime: "2026/04/04 03:41",
-    receiveTime: "2026/04/04 03:41",
-    status: "pending",
-    source: "manual",
-  },
-  {
-    id: "3",
-    name: "广州美术学院 张梦婕",
-    fileName: "广州美术学院-张梦婕.pdf",
-    fileSize: "560.2 KB",
-    importTime: "2026/04/04 03:35",
-    receiveTime: "2026/04/03 19:36",
-    status: "analyzed",
-    source: "email",
-    emailSubject: "Fw: 广州美术学院-张梦婕-游戏ui实习生",
-    sender: "工具人-土耳其 <gongjurenhuerqi@10m.com.cn>",
-    snippet: "----------转发的邮件内容---------- 发件人：郑琳琳<linlin.zheng@10m.com.cn> 日期：2026年4月3日 周五 14:11 收件人：工具人-土耳机...",
-  },
-];
-
-const statusConfig = {
-  pending: { label: "待处理", color: "#f59e0b", bg: "#fffbeb", border: "#fde68a" },
-  analyzed: { label: "已分析", color: "#10b981", bg: "#f0fdf4", border: "#bbf7d0" },
-  archived: { label: "已归档", color: "#6b7280", bg: "#f9fafb", border: "#e5e7eb" },
+const CONNECTED_EMAIL = {
+  address: "13822362481@163.com",
+  host: "imap.163.com:993",
+  folder: "INBOX",
+  lastSync: "2026/04/07 09:35",
+  lastResult: "扫描 5 封，导入 1 份，跳过 1 个附件",
 };
 
 export default function EmailImportPage() {
+  const [, navigate] = useLocation();
+  const [configCollapsed, setConfigCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<EmailType>("163");
-  const [connectedEmails] = useState<ConnectedEmail[]>(mockConnected);
-  const [resumes] = useState<ResumeItem[]>(mockResumes);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "analyzed" | "archived">("all");
+  const [form, setForm] = useState({
+    email: "", displayName: "", folder: "INBOX", days: "30",
+    username: "", password: "", ssl: true,
+  });
+  const [statusFilter, setStatusFilter] = useState<"all" | ResumeStatus>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isConnected] = useState(true);
   const [syncing, setSyncing] = useState(false);
 
-  const config = EMAIL_CONFIGS.find(c => c.type === activeTab)!;
+  const cfg = EMAIL_CONFIGS[activeTab];
 
-  // Form state
-  const [formEmail, setFormEmail] = useState("");
-  const [formName, setFormName] = useState("");
-  const [formFolder, setFormFolder] = useState("INBOX");
-  const [formDays, setFormDays] = useState("30");
-  const [formUser, setFormUser] = useState("");
-  const [formPassword, setFormPassword] = useState("");
-  const [formHost, setFormHost] = useState(config.host);
-  const [formPort, setFormPort] = useState(config.port);
-  const [formSSL, setFormSSL] = useState(true);
-  const [connecting, setConnecting] = useState(false);
+  const filteredResumes = MOCK_RESUMES.filter(r => {
+    const matchStatus = statusFilter === "all" || r.status === statusFilter;
+    const matchSearch = !searchQuery ||
+      r.name.includes(searchQuery) ||
+      r.fileName.includes(searchQuery) ||
+      r.emailSubject.includes(searchQuery) ||
+      r.sender.includes(searchQuery);
+    return matchStatus && matchSearch;
+  });
 
-  const handleTabChange = (t: EmailType) => {
-    setActiveTab(t);
-    const c = EMAIL_CONFIGS.find(x => x.type === t)!;
-    setFormHost(c.host);
-    setFormPort(c.port);
+  const allSelected = filteredResumes.length > 0 && filteredResumes.every(r => selectedIds.includes(r.id));
+
+  const toggleAll = () => {
+    if (allSelected) setSelectedIds([]);
+    else setSelectedIds(filteredResumes.map(r => r.id));
   };
 
-  const handleConnect = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formEmail) { toast.error("请填写邮箱地址"); return; }
-    if (!formPassword) { toast.error("请填写客户端授权码"); return; }
-    setConnecting(true);
-    setTimeout(() => {
-      setConnecting(false);
-      toast.success("邮箱连接成功！开始同步简历...");
-    }, 1800);
+  const toggleOne = (id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const handleAnalyzeWithHoro = () => {
+    if (selectedIds.length === 0) { toast.warning("请先勾选简历"); return; }
+    toast.success(`已将 ${selectedIds.length} 份简历发送至 Horo AI 进行分析`);
+    navigate("/horo-ai");
+  };
+
+  const handleImportCandidates = () => {
+    if (selectedIds.length === 0) { toast.warning("请先勾选简历"); return; }
+    toast.success(`已将 ${selectedIds.length} 份简历导入候选人库`);
+    setSelectedIds([]);
+  };
+
+  const handleConnect = () => {
+    if (!form.email) { toast.error("请填写邮箱地址"); return; }
+    toast.success("邮箱连接成功，开始同步简历...");
+    setConfigCollapsed(true);
   };
 
   const handleSync = () => {
@@ -212,416 +160,357 @@ export default function EmailImportPage() {
     setTimeout(() => { setSyncing(false); toast.success("同步完成，共导入 1 份新简历"); }, 2000);
   };
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
-
-  const toggleAll = () => {
-    if (selectedIds.size === filteredResumes.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredResumes.map(r => r.id)));
-    }
-  };
-
-  const filteredResumes = resumes.filter(r => filterStatus === "all" || r.status === filterStatus);
-
-  const stats = {
-    syncing: resumes.filter(r => r.status === "pending").length,
-    total: resumes.length,
-    pending: resumes.filter(r => r.status === "pending").length,
-  };
+  const pendingCount = MOCK_RESUMES.filter(r => r.status === "pending").length;
+  const analyzedCount = MOCK_RESUMES.filter(r => r.status === "analyzed").length;
 
   return (
-    <AppLayout>
-      <div className="p-6 max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">简历库</h1>
-          <p className="text-sm text-gray-500 mt-0.5">邮箱同步和手动导入的简历都会显示，分析时直接跳到当前会话</p>
-        </div>
+    <AppLayout title="邮箱简历导入" breadcrumb={[{ label: "获取简历" }, { label: "邮箱简历导入" }]}>
+      <div className="p-6 space-y-5 max-w-5xl mx-auto">
 
-        {/* Top Section: Connect + Connected */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Left: Connect Email */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-1">
-              <h2 className="text-base font-semibold text-gray-900">连接招聘邮箱</h2>
-              <button
-                onClick={handleSync}
-                disabled={syncing}
-                className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all"
-                style={{ borderColor: "#4F39F6", color: "#4F39F6", background: "#f5f3ff" }}
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
-                邮箱同步
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 mb-4">
-              先接收件箱，把邮件里的简历附件同步进简历库。当前先开放 163、126、QQ 和通用 IMAP 邮箱接入。
-            </p>
-
-            {/* Email Type Tabs */}
-            <div className="flex gap-2 mb-4 flex-wrap">
-              {EMAIL_CONFIGS.map(c => (
-                <button
-                  key={c.type}
-                  onClick={() => handleTabChange(c.type)}
-                  className="px-4 py-1.5 rounded-lg text-sm font-medium border transition-all"
-                  style={activeTab === c.type ? {
-                    background: "#4F39F6", color: "#fff", borderColor: "#4F39F6"
-                  } : {
-                    background: "#fff", color: "#374151", borderColor: "#e5e7eb"
-                  }}
-                >
-                  {c.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Instructions */}
-            <div className="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-100">
-              <p className="text-sm font-medium text-gray-700 mb-2">
-                {activeTab === "company" ? "企业邮箱配置说明" : "网易 / QQ 邮箱配置说明"}
-              </p>
-              {config.instructions}
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleConnect} className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="email"
-                  placeholder="HR 邮箱地址"
-                  value={formEmail}
-                  onChange={e => setFormEmail(e.target.value)}
-                  className="h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 bg-white"
-                />
-                <input
-                  type="text"
-                  placeholder="显示名称（可选）"
-                  value={formName}
-                  onChange={e => setFormName(e.target.value)}
-                  className="h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 bg-white"
-                />
+        {/* 邮箱配置区域（可收起） */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div
+            className="flex items-center justify-between px-6 py-4 cursor-pointer select-none"
+            onClick={() => setConfigCollapsed(v => !v)}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">
+                <Mail className="w-4 h-4 text-indigo-600" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  placeholder="INBOX"
-                  value={formFolder}
-                  onChange={e => setFormFolder(e.target.value)}
-                  className="h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 bg-white"
-                />
-                <input
-                  type="number"
-                  placeholder="30"
-                  value={formDays}
-                  onChange={e => setFormDays(e.target.value)}
-                  className="h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 bg-white"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  placeholder="IMAP 用户名，默认同邮箱"
-                  value={formUser}
-                  onChange={e => setFormUser(e.target.value)}
-                  className="h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 bg-white"
-                />
-                <input
-                  type="password"
-                  placeholder="客户端授权码 / 应用密码"
-                  value={formPassword}
-                  onChange={e => setFormPassword(e.target.value)}
-                  className="h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 bg-white"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  value={formHost}
-                  onChange={e => setFormHost(e.target.value)}
-                  placeholder={activeTab === "company" ? "IMAP 服务器地址" : config.host}
-                  className="h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 bg-white"
-                />
-                <input
-                  type="text"
-                  value={formPort}
-                  onChange={e => setFormPort(e.target.value)}
-                  className="h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 bg-white"
-                />
-              </div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <div
-                  onClick={() => setFormSSL(!formSSL)}
-                  className="w-4 h-4 rounded flex items-center justify-center border transition-all"
-                  style={formSSL ? { background: "#4F39F6", borderColor: "#4F39F6" } : { background: "#fff", borderColor: "#d1d5db" }}
-                >
-                  {formSSL && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                </div>
-                <span className="text-sm text-gray-600">使用 SSL / TLS 安全连接</span>
-              </label>
-              <div className="flex gap-3 pt-1">
-                <button
-                  type="submit"
-                  disabled={connecting}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
-                  style={{ background: "#4F39F6", boxShadow: "0 4px 12px rgba(79,57,246,0.25)" }}
-                >
-                  <Mail className="w-4 h-4" />
-                  {connecting ? "连接中..." : "连接邮箱"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setFormEmail(""); setFormName(""); setFormFolder("INBOX"); setFormDays("30"); setFormUser(""); setFormPassword(""); }}
-                  className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 border border-gray-200 hover:bg-gray-50 transition-all"
-                >
-                  重置表单
-                </button>
-              </div>
-            </form>
-          </div>
-
-          {/* Right: Connected Emails */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-1">
-              <h2 className="text-base font-semibold text-gray-900">已连接邮箱</h2>
-              <button onClick={handleSync} className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-indigo-600 transition-colors">
-                <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
-                刷新
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 mb-4">同步后，邮件里的简历附件会直接出现在下面的简历库里。</p>
-
-            {connectedEmails.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-                <Mail className="w-10 h-10 mb-3 opacity-30" />
-                <p className="text-sm">暂未连接任何邮箱</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {connectedEmails.map(em => (
-                  <div key={em.id} className="rounded-xl border border-gray-100 p-4 bg-gray-50">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm text-gray-900">{em.label} · {em.email}</span>
-                          <span className="text-xs px-2 py-0.5 rounded-full font-medium"
-                            style={em.status === "active" ? { background: "#dcfce7", color: "#16a34a" } : { background: "#fee2e2", color: "#dc2626" }}>
-                            {em.status === "active" ? "正常" : "异常"}
-                          </span>
-                          <span className="text-xs text-gray-400 border border-gray-200 px-2 py-0.5 rounded-full">客户端授权码</span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">{em.email}</p>
-                        <p className="text-xs text-gray-400">{em.host}:{em.port} · 文件夹 {em.folder}</p>
-                        <p className="text-xs text-gray-400">首次导入范围 {em.syncDays} 天 · 最近同步 {em.lastSync}</p>
-                        <p className="text-xs text-gray-400">最近一次：扫描 {em.scanned} 封，导入 {em.imported} 份，跳过 {em.attachments} 个附件</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 mt-3">
-                      <button className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-white transition-all">
-                        修改范围
-                      </button>
-                      <button
-                        onClick={handleSync}
-                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium text-white transition-all"
-                        style={{ background: "#4F39F6" }}
-                      >
-                        <RefreshCw className={`w-3 h-3 ${syncing ? "animate-spin" : ""}`} />
-                        立即同步
-                      </button>
-                      <button className="text-xs px-3 py-1.5 rounded-lg border border-red-100 text-red-500 hover:bg-red-50 transition-all">
-                        移除
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Bottom Section: Resume List + Batch Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* Resume List */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-1">
-              <h2 className="text-base font-semibold text-gray-900">候选人简历</h2>
-              <div className="flex items-center gap-2">
-                <button onClick={handleSync} className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-indigo-600 transition-colors">
-                  <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
-                  刷新
-                </button>
-                <button className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg text-white transition-all"
-                  style={{ background: "#4F39F6" }}>
-                  <Upload className="w-3.5 h-3.5" />
-                  导入简历
-                </button>
-              </div>
-            </div>
-            <p className="text-xs text-gray-500 mb-4">
-              这里会汇总手动导入和邮箱同步进来的简历，支持搜索、筛选，以及单个或批量直接跳进当前对话分析。
-            </p>
-
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  placeholder="搜索候选人、文件名、邮件主题、发件人"
-                  className="w-full h-9 pl-8 pr-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-indigo-400 bg-gray-50"
-                />
-                <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                </svg>
-              </div>
-              {(["all", "pending", "analyzed", "archived"] as const).map(s => (
-                <button
-                  key={s}
-                  onClick={() => setFilterStatus(s)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium border transition-all"
-                  style={filterStatus === s ? { background: "#4F39F6", color: "#fff", borderColor: "#4F39F6" } : { background: "#fff", color: "#6b7280", borderColor: "#e5e7eb" }}
-                >
-                  {s === "all" ? "全部" : s === "pending" ? "待处理" : s === "analyzed" ? "已分析" : "已归档"}
-                </button>
-              ))}
-            </div>
-
-            <p className="text-xs text-gray-500 mb-3">共 {filteredResumes.length} 份简历
-              <span className="ml-2 text-gray-400">单个分析或批量分析都会跳到当前对话</span>
-            </p>
-
-            {/* Resume Items */}
-            <div className="space-y-2">
-              {/* Select All */}
-              <div className="flex items-center gap-2 pb-1 border-b border-gray-100">
-                <button onClick={toggleAll} className="text-gray-400 hover:text-indigo-600 transition-colors">
-                  {selectedIds.size === filteredResumes.length && filteredResumes.length > 0
-                    ? <CheckSquare className="w-4 h-4 text-indigo-600" />
-                    : <Square className="w-4 h-4" />
-                  }
-                </button>
-                <span className="text-xs text-gray-400">全选</span>
-              </div>
-
-              {filteredResumes.map(resume => {
-                const sc = statusConfig[resume.status];
-                return (
-                  <div key={resume.id}
-                    className="rounded-xl border border-gray-100 p-3.5 hover:border-indigo-200 transition-all"
-                    style={{ background: selectedIds.has(resume.id) ? "#f5f3ff" : "#fafafa" }}>
-                    <div className="flex items-start gap-3">
-                      <button onClick={() => toggleSelect(resume.id)} className="mt-0.5 text-gray-400 hover:text-indigo-600 transition-colors flex-shrink-0">
-                        {selectedIds.has(resume.id)
-                          ? <CheckSquare className="w-4 h-4 text-indigo-600" />
-                          : <Square className="w-4 h-4" />
-                        }
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-sm text-gray-900">{resume.name}</span>
-                          <span className="text-xs px-2 py-0.5 rounded-full font-medium border"
-                            style={{ color: sc.color, background: sc.bg, borderColor: sc.border }}>
-                            {sc.label}
-                          </span>
-                          {resume.source === "manual" && (
-                            <span className="text-xs text-gray-400 border border-gray-200 px-2 py-0.5 rounded-full">手动导入</span>
-                          )}
-                          {resume.source === "email" && (
-                            <span className="text-xs text-indigo-500 border border-indigo-100 px-2 py-0.5 rounded-full bg-indigo-50">邮箱同步</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
-                          <span>📄 {resume.fileName}</span>
-                          <span>{resume.fileSize}</span>
-                          <span>导入时间：{resume.importTime}</span>
-                        </div>
-                        {resume.source === "email" && resume.emailSubject && (
-                          <div className="mt-2 text-xs text-gray-500 space-y-0.5">
-                            <p>收件时间：{resume.receiveTime}</p>
-                            <p>邮件主题：{resume.emailSubject}</p>
-                            <p>发件人：{resume.sender}</p>
-                            <p className="text-gray-400 line-clamp-2">邮件摘要：{resume.snippet}</p>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <button className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-all">
-                          <BarChart2 className="w-3 h-3" />
-                          分析
-                        </button>
-                        <button className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg border border-red-100 text-red-400 hover:bg-red-50 transition-all">
-                          <Trash2 className="w-3 h-3" />
-                          删除
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Batch Actions */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h2 className="text-base font-semibold text-gray-900 mb-1">批量动作</h2>
-            <p className="text-xs text-gray-500 mb-5">
-              这里勾选中的简历会直接作为附件带到所有工作台，并自动加入简历评估技能。
-            </p>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-2 mb-5">
-              <div className="rounded-xl p-3 text-center" style={{ background: "#f0fdf4" }}>
-                <div className="text-xl font-bold text-green-600">{stats.syncing}</div>
-                <div className="text-xs text-gray-500 mt-0.5">当前同中</div>
-              </div>
-              <div className="rounded-xl p-3 text-center" style={{ background: "#f5f3ff" }}>
-                <div className="text-xl font-bold text-indigo-600">{stats.total}</div>
-                <div className="text-xs text-gray-500 mt-0.5">列表总数</div>
-              </div>
-              <div className="rounded-xl p-3 text-center" style={{ background: "#fffbeb" }}>
-                <div className="text-xl font-bold text-amber-600">{stats.pending}</div>
-                <div className="text-xs text-gray-500 mt-0.5">待处理</div>
-              </div>
-            </div>
-
-            {/* Batch Buttons */}
-            <div className="space-y-2">
-              <button
-                disabled={selectedIds.size === 0}
-                onClick={() => toast.info(`正在批量分析 ${selectedIds.size} 份简历...`)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium text-white transition-all"
-                style={selectedIds.size > 0 ? { background: "#4F39F6", boxShadow: "0 4px 12px rgba(79,57,246,0.25)" } : { background: "#e5e7eb", color: "#9ca3af", cursor: "not-allowed" }}
-              >
-                <BarChart2 className="w-4 h-4" />
-                分析选中简历 {selectedIds.size > 0 ? `(${selectedIds.size})` : ""}
-              </button>
-              <button
-                disabled={selectedIds.size === 0}
-                onClick={() => toast.info("已全选当前筛选结果")}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium border transition-all"
-                style={selectedIds.size > 0 ? { borderColor: "#4F39F6", color: "#4F39F6", background: "#f5f3ff" } : { borderColor: "#e5e7eb", color: "#9ca3af", cursor: "not-allowed" }}
-              >
-                <CheckSquare className="w-4 h-4" />
-                全选当前结果
-              </button>
-            </div>
-
-            {selectedIds.size > 0 && (
-              <div className="mt-4 p-3 rounded-xl border flex items-start gap-2"
-                style={{ background: "#f5f3ff", borderColor: "#ddd6fe" }}>
-                <AlertCircle className="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-indigo-700">
-                  已选中 <span className="font-bold">{selectedIds.size}</span> 份简历，点击「分析选中简历」将跳转到 Horo AI 进行批量分析
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900">连接招聘邮箱</h2>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {isConnected
+                    ? `已连接：${CONNECTED_EMAIL.address}  ·  最近同步 ${CONNECTED_EMAIL.lastSync}`
+                    : "先接收件箱，把邮件里的简历附件同步进简历库"}
                 </p>
               </div>
+            </div>
+            <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+              {isConnected && (
+                <button
+                  onClick={handleSync}
+                  disabled={syncing}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
+                  邮箱同步
+                </button>
+              )}
+              <div onClick={() => setConfigCollapsed(v => !v)} className="p-1">
+                {configCollapsed
+                  ? <ChevronDown className="w-4 h-4 text-gray-400" />
+                  : <ChevronUp className="w-4 h-4 text-gray-400" />
+                }
+              </div>
+            </div>
+          </div>
+
+          {!configCollapsed && (
+            <div className="border-t border-gray-100 px-6 py-5">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* 左：配置表单 */}
+                <div>
+                  <div className="flex gap-2 mb-4 flex-wrap">
+                    {(["126", "163", "company", "qq"] as EmailType[]).map(type => (
+                      <button
+                        key={type}
+                        onClick={() => setActiveTab(type)}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                          activeTab === type
+                            ? "bg-indigo-600 text-white border-indigo-600"
+                            : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"
+                        }`}
+                      >
+                        {EMAIL_CONFIGS[type].label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="bg-gray-50 rounded-xl p-4 mb-4 text-xs text-gray-600 leading-relaxed whitespace-pre-line">
+                    <p className="font-medium text-gray-700 mb-1.5">{cfg.label} 邮箱配置说明</p>
+                    {cfg.hint}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      className="col-span-2 sm:col-span-1 h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                      placeholder="HR 邮箱地址"
+                      value={form.email}
+                      onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                    />
+                    <input
+                      className="col-span-2 sm:col-span-1 h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                      placeholder="显示名称（可选）"
+                      value={form.displayName}
+                      onChange={e => setForm(f => ({ ...f, displayName: e.target.value }))}
+                    />
+                    <input
+                      className="h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                      placeholder="同步文件夹（INBOX）"
+                      value={form.folder}
+                      onChange={e => setForm(f => ({ ...f, folder: e.target.value }))}
+                    />
+                    <input
+                      className="h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                      placeholder="首次导入范围（天）"
+                      value={form.days}
+                      onChange={e => setForm(f => ({ ...f, days: e.target.value }))}
+                    />
+                    <input
+                      className="h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                      placeholder="IMAP 用户名（默认同邮箱）"
+                      value={form.username}
+                      onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
+                    />
+                    <input
+                      type="password"
+                      className="h-10 px-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                      placeholder="客户端授权码 / 应用密码"
+                      value={form.password}
+                      onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                    />
+                    <input
+                      className="h-10 px-3 rounded-xl border border-gray-200 text-sm bg-gray-50 text-gray-500"
+                      value={cfg.host || "IMAP Host（自定义）"}
+                      readOnly={!!cfg.host}
+                      placeholder="IMAP Host"
+                    />
+                    <input
+                      className="h-10 px-3 rounded-xl border border-gray-200 text-sm bg-gray-50 text-gray-500"
+                      value={cfg.port}
+                      readOnly
+                      placeholder="端口"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-3 mb-4">
+                    <Checkbox
+                      id="ssl"
+                      checked={form.ssl}
+                      onCheckedChange={(v: boolean | "indeterminate") => setForm(f => ({ ...f, ssl: v === true }))}
+                    />
+                    <label htmlFor="ssl" className="text-sm text-gray-600">使用 SSL / TLS 安全连接</label>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button onClick={handleConnect} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl gap-2">
+                      <Mail className="w-4 h-4" />连接邮箱
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setForm({ email: "", displayName: "", folder: "INBOX", days: "30", username: "", password: "", ssl: true })}
+                      className="rounded-xl"
+                    >
+                      重置表单
+                    </Button>
+                  </div>
+                </div>
+
+                {/* 右：已连接邮箱 */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-gray-700">已连接邮箱</h3>
+                    <button onClick={() => toast.success("正在刷新...")} className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1">
+                      <RefreshCw className="w-3 h-3" />刷新
+                    </button>
+                  </div>
+                  {isConnected ? (
+                    <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <span className="text-sm font-medium text-gray-900">{CONNECTED_EMAIL.address}</span>
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">正常</span>
+                      </div>
+                      <div className="text-xs text-gray-500 space-y-1">
+                        <div>{CONNECTED_EMAIL.host} · 文件夹 {CONNECTED_EMAIL.folder}</div>
+                        <div>首次导入范围 30 天 · 最近同步 {CONNECTED_EMAIL.lastSync}</div>
+                        <div className="text-gray-400">{CONNECTED_EMAIL.lastResult}</div>
+                      </div>
+                      <div className="flex gap-2 pt-1 flex-wrap">
+                        <button
+                          onClick={handleSync}
+                          disabled={syncing}
+                          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg"
+                        >
+                          <RefreshCw className={`w-3 h-3 ${syncing ? "animate-spin" : ""}`} />
+                          立即同步
+                        </button>
+                        <button onClick={() => toast.info("功能开发中")} className="text-xs text-gray-500 hover:text-gray-700 underline">修改范围</button>
+                        <button onClick={() => toast.success("已移除邮箱连接")} className="text-xs text-red-500 hover:text-red-700 underline">移除</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 rounded-xl p-6 text-center text-sm text-gray-400">
+                      <Inbox className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                      尚未连接任何邮箱
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 简历列表区域 */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900">候选人简历</h2>
+                <p className="text-xs text-gray-400 mt-0.5">邮箱同步和手动导入的简历都会显示在这里，分析时直接跳转到 Horo AI 对话</p>
+              </div>
+              <button
+                onClick={() => toast.info("手动导入功能开发中")}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />手动导入
+              </button>
+            </div>
+
+            <div className="flex items-center gap-4 mt-4 flex-wrap">
+              <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+                {([
+                  { key: "all", label: `全部 ${MOCK_RESUMES.length}` },
+                  { key: "pending", label: `待处理 ${pendingCount}` },
+                  { key: "analyzed", label: `已分析 ${analyzedCount}` },
+                ] as { key: "all" | ResumeStatus; label: string }[]).map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setStatusFilter(tab.key)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      statusFilter === tab.key
+                        ? "bg-white text-gray-900 shadow-sm"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2 flex-1 min-w-[200px] bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
+                <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                <input
+                  className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
+                  placeholder="搜索候选人、文件名、邮件主题、发件人"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {selectedIds.length > 0 && (
+            <div className="px-6 py-3 bg-indigo-50 border-b border-indigo-100 flex items-center gap-3 flex-wrap">
+              <AlertCircle className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+              <span className="text-sm font-medium text-indigo-700">已选 {selectedIds.length} 份简历</span>
+              <div className="flex gap-2 ml-auto flex-wrap">
+                <Button size="sm" onClick={handleAnalyzeWithHoro} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl gap-1.5 text-xs h-8">
+                  <MessageSquare className="w-3.5 h-3.5" />批量分析（Horo AI）
+                </Button>
+                <Button size="sm" variant="outline" onClick={handleImportCandidates} className="rounded-xl gap-1.5 text-xs h-8 border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+                  <Users className="w-3.5 h-3.5" />批量导入候选人库
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])} className="rounded-xl text-xs h-8 text-gray-500">取消</Button>
+              </div>
+            </div>
+          )}
+
+          <div className="px-6 py-3 border-b border-gray-50 flex items-center gap-3 text-xs font-medium text-gray-400">
+            <Checkbox checked={allSelected} onCheckedChange={toggleAll} className="flex-shrink-0" />
+            <span className="flex-1">候选人 / 文件</span>
+            <span className="w-20 text-center hidden sm:block">来源</span>
+            <span className="w-20 text-center hidden md:block">状态</span>
+            <span className="w-32 text-right hidden lg:block">导入时间</span>
+            <span className="w-24 text-right">操作</span>
+          </div>
+
+          <div className="divide-y divide-gray-50">
+            {filteredResumes.length === 0 ? (
+              <div className="py-16 text-center">
+                <Inbox className="w-10 h-10 mx-auto text-gray-200 mb-3" />
+                <p className="text-sm text-gray-400">暂无简历，请先连接邮箱或手动导入</p>
+              </div>
+            ) : (
+              filteredResumes.map(resume => (
+                <div
+                  key={resume.id}
+                  className={`px-6 py-4 flex items-start gap-3 hover:bg-gray-50/50 transition-colors ${selectedIds.includes(resume.id) ? "bg-indigo-50/30" : ""}`}
+                >
+                  <Checkbox
+                    checked={selectedIds.includes(resume.id)}
+                    onCheckedChange={() => toggleOne(resume.id)}
+                    className="mt-0.5 flex-shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-semibold text-gray-900">{resume.name}</span>
+                      {resume.status === "pending" ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                          <Clock className="w-3 h-3" />待处理
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                          <CheckCircle2 className="w-3 h-3" />已分析
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <FileText className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                      <span className="text-xs text-gray-500 truncate">{resume.fileName}</span>
+                      <span className="text-xs text-gray-300">·</span>
+                      <span className="text-xs text-gray-400">{resume.fileSize}</span>
+                    </div>
+                    <div className="text-xs text-gray-400 mt-0.5 truncate">邮件主题：{resume.emailSubject}</div>
+                    <div className="text-xs text-gray-400 truncate">发件人：{resume.sender} · 收件时间：{resume.receivedAt}</div>
+                  </div>
+                  <div className="w-20 text-center hidden sm:block">
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{resume.source}</span>
+                  </div>
+                  <div className="w-20 text-center hidden md:flex justify-center">
+                    {resume.status === "pending" ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-amber-600"><Clock className="w-3 h-3" />待处理</span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs text-emerald-600"><CheckCircle2 className="w-3 h-3" />已分析</span>
+                    )}
+                  </div>
+                  <div className="w-32 text-right hidden lg:block">
+                    <span className="text-xs text-gray-400">{resume.importedAt}</span>
+                  </div>
+                  <div className="w-24 flex items-center justify-end gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => { toast.success(`正在分析 ${resume.name} 的简历...`); navigate("/horo-ai"); }}
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                      title="发送到 Horo AI 分析"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => toast.success(`${resume.name} 已导入候选人库`)}
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                      title="导入候选人库"
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => toast.success("已删除")}
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      title="删除"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))
             )}
           </div>
+
+          {filteredResumes.length > 0 && (
+            <div className="px-6 py-3 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
+              <span>共 {filteredResumes.length} 份简历</span>
+              <span>勾选后可批量分析或导入候选人库</span>
+            </div>
+          )}
         </div>
       </div>
     </AppLayout>

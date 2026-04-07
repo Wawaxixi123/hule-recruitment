@@ -51,11 +51,11 @@ const FORMAT_ICON: Record<string, React.ReactNode> = {
 
 const INITIAL_DOCS: KnowledgeDoc[] = [
   {
-    id: "k1", title: "葫乐科技公司介绍2024", type: "company_intro", format: "pdf",
+    id: "k1", title: "Horo AI 公司介绍2024", type: "company_intro", format: "pdf",
     size: "2.4MB", uploadedAt: "2024-03-10", status: "indexed",
     usedInJD: 12, usedInScreen: 8,
     tags: ["公司背景", "业务方向", "发展历程"],
-    summary: "葫乐科技成立于2020年，专注于AI+HR领域，已服务500+企业客户，融资B轮。",
+    summary: "Horo AI 成立于2020年，专注于AI+HR领域，已服务500+企业客户，融资B轮。",
   },
   {
     id: "k2", title: "企业文化手册V3", type: "culture", format: "pdf",

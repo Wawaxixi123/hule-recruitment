@@ -147,7 +147,7 @@ export default function BossPublishModal({ open, onClose, jobTitle = "", jobDesc
                   <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   <div>
                     <span className="text-xs text-gray-400 mr-2">公司</span>
-                    <span className="text-sm text-gray-700 font-medium">葫乐科技·互联网 深圳葫乐科技有限公司</span>
+                    <span className="text-sm text-gray-700 font-medium">Horo AI·互联网 深圳 Horo AI 科技有限公司</span>
                   </div>
                 </div>
 

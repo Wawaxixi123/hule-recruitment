@@ -153,7 +153,7 @@ export default function RegisterPage() {
               <div className="text-lg font-bold text-gray-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 Horo <span className="ai-gradient-text">AI</span>
               </div>
-              <div className="text-xs text-gray-400">智能招聘平台</div>
+              <div className="text-xs text-gray-400">HORO AI HR · 智能招聘平台</div>
             </div>
           </div>
 

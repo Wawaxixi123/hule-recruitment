@@ -94,7 +94,8 @@ export default function LoginPage() {
                 <path d="M10 16 Q16 10 22 16 Q16 22 10 16Z" fill="white"/>
               </svg>
             </div>
-            <h1 className="text-xl font-bold text-gray-900 mb-1.5">登录 HORO AI Agent</h1>
+            <h1 className="text-xl font-bold text-gray-900 mb-1">Horo AI 智能招聘平台</h1>
+            <p className="text-xs text-indigo-500 font-medium mb-2">HORO AI HR</p>
             <p className="text-sm text-gray-500 text-center leading-relaxed">
               使用手机号验证码或微信登录，继续当前操作
             </p>

@@ -12,7 +12,7 @@ export default function NotFound() {
             <Brain className="w-5 h-5 text-white" />
           </div>
           <span className="text-xl font-bold text-gray-900">
-            葫乐<span className="ai-gradient-text">AI</span>
+            Horo <span className="ai-gradient-text">AI</span>
           </span>
         </div>
         <div className="text-8xl font-extrabold text-indigo-100 mb-4 select-none" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>

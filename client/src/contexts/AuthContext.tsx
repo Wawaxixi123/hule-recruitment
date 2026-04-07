@@ -31,9 +31,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const MOCK_USER: User = {
   id: "user-001",
   name: "张晓雯",
-  email: "zhangxiaowen@hule.ai",
+  email: "zhangxiaowen@horoai.com",
   role: "hr",
-  company: "葫乐科技",
+  company: "Horo AI",
   department: "人力资源部",
 };
 

@@ -252,7 +252,10 @@ export default function LandingPage() {
             <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #4F39F6, #06b6d4)" }}>
               <Brain className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-base" style={{ color: "#111827" }}>Horo AI</span>
+            <div>
+              <span className="font-bold text-base" style={{ color: "#111827" }}>Horo AI</span>
+              <span className="hidden sm:inline text-xs text-gray-400 ml-1.5">智能招聘平台</span>
+            </div>
           </div>
 
           <div className="hidden md:flex items-center gap-8">

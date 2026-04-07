@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Briefcase, Users, Calendar, Zap,
   BarChart3, Settings, Brain, ChevronLeft, ChevronRight,
   Bell, Search, LogOut, ChevronDown, Menu, Sparkles, BookOpen, MessageSquare,
-  ShieldCheck, Radar, Mail, Video, Coins
+  ShieldCheck, Radar, Mail, Video, Coins, FileSearch
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -24,16 +24,31 @@ import { toast } from "sonner";
 import AICopilot from "./AICopilot";
 import CreditsModal from "./CreditsModal";
 
-const navItems = [
+// 平铺导航项（不含子菜单）
+type NavItem = {
+  icon: React.ElementType;
+  label: string;
+  path: string;
+  highlight?: boolean;
+  children?: { icon: React.ElementType; label: string; path: string }[];
+};
+
+const navItems: NavItem[] = [
   { icon: MessageSquare, label: "Horo AI", path: "/horo-ai", highlight: true },
   { icon: LayoutDashboard, label: "工作台", path: "/dashboard" },
   { icon: Briefcase, label: "职位管理", path: "/jobs" },
-  { icon: Radar, label: "主动获取简历", path: "/sourcing" },
-  { icon: Mail, label: "邮箱简历导入", path: "/email-import" },
+  {
+    icon: FileSearch,
+    label: "获取简历",
+    path: "/sourcing",
+    children: [
+      { icon: Radar, label: "主动获取简历", path: "/sourcing" },
+      { icon: Mail, label: "邮箱简历导入", path: "/email-import" },
+    ],
+  },
   { icon: Users, label: "候选人", path: "/candidates" },
   { icon: ShieldCheck, label: "背景调查", path: "/background-check" },
   { icon: Calendar, label: "面试管理", path: "/interviews" },
-  { icon: Video, label: "视频录制", path: "/video-record" },
   { icon: Zap, label: "Skill Hub", path: "/skill-hub" },
   { icon: BookOpen, label: "知识库", path: "/knowledge" },
   { icon: BarChart3, label: "数据看板", path: "/analytics" },
@@ -54,6 +69,8 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
   // Horo AI 默认常驻展开
   const [copilotOpen, setCopilotOpen] = useState(true);
   const [creditsOpen, setCreditsOpen] = useState(false);
+  // 展开的一级菜单（含子菜单的）
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['/sourcing']);
 
   useEffect(() => {
     const stored = localStorage.getItem("hule_user");
@@ -99,29 +116,74 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
       </div>
 
       {/* Nav Items */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
-          const active = isActive(item.path);
+          const hasChildren = item.children && item.children.length > 0;
+          const isExpanded = expandedMenus.includes(item.path);
+          // 子菜单中任意一个激活时，父菜单也高亮
+          const childActive = hasChildren && item.children!.some(c => isActive(c.path));
+          const active = !hasChildren && isActive(item.path);
+
           return (
-            <button
-              key={item.path}
-              onClick={() => { navigate(item.path); setMobileOpen(false); }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
-                active
-                  ? "bg-indigo-50 text-indigo-700"
-                  : (item as any).highlight
-                    ? "text-indigo-600 hover:bg-indigo-50"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              } ${collapsed ? "justify-center" : ""}`}
-              title={collapsed ? item.label : undefined}
-            >
-              <item.icon className={`w-4 h-4 flex-shrink-0 ${active ? "text-indigo-600" : (item as any).highlight ? "text-indigo-500" : ""}`} />
-              {!collapsed && <span>{item.label}</span>}
-              {!collapsed && (item as any).highlight && !active && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <div key={item.path}>
+              <button
+                onClick={() => {
+                  if (hasChildren) {
+                    if (collapsed) return;
+                    setExpandedMenus(prev =>
+                      prev.includes(item.path)
+                        ? prev.filter(p => p !== item.path)
+                        : [...prev, item.path]
+                    );
+                  } else {
+                    navigate(item.path);
+                    setMobileOpen(false);
+                  }
+                }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+                  active || childActive
+                    ? "bg-indigo-50 text-indigo-700"
+                    : item.highlight
+                      ? "text-indigo-600 hover:bg-indigo-50"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                } ${collapsed ? "justify-center" : ""}`}
+                title={collapsed ? item.label : undefined}
+              >
+                <item.icon className={`w-4 h-4 flex-shrink-0 ${active || childActive ? "text-indigo-600" : item.highlight ? "text-indigo-500" : ""}`} />
+                {!collapsed && <span>{item.label}</span>}
+                {!collapsed && item.highlight && !active && (
+                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                )}
+                {!collapsed && hasChildren && (
+                  <ChevronDown className={`ml-auto w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
+                )}
+                {active && !collapsed && !hasChildren && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />}
+              </button>
+
+              {/* 子菜单 */}
+              {hasChildren && isExpanded && !collapsed && (
+                <div className="ml-3 mt-0.5 pl-3 border-l-2 border-indigo-100 space-y-0.5">
+                  {item.children!.map(child => {
+                    const childIsActive = isActive(child.path);
+                    return (
+                      <button
+                        key={child.path}
+                        onClick={() => { navigate(child.path); setMobileOpen(false); }}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all duration-150 ${
+                          childIsActive
+                            ? "bg-indigo-50 text-indigo-700 font-medium"
+                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+                        }`}
+                      >
+                        <child.icon className={`w-3.5 h-3.5 flex-shrink-0 ${childIsActive ? "text-indigo-600" : ""}`} />
+                        <span>{child.label}</span>
+                        {childIsActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />}
+                      </button>
+                    );
+                  })}
+                </div>
               )}
-              {active && !collapsed && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />}
-            </button>
+            </div>
           );
         })}
       </nav>
@@ -155,7 +217,7 @@ export default function AppLayout({ children, title, breadcrumb }: AppLayoutProp
                 </Avatar>
                 <div className="flex-1 text-left min-w-0">
                   <div className="text-xs font-semibold text-gray-900 truncate">{user.name}</div>
-                  <div className="text-xs text-gray-400 truncate">{user.company || "葫乐科技"}</div>
+                  <div className="text-xs text-gray-400 truncate">{user.company || "Horo AI"}</div>
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
               </button>
