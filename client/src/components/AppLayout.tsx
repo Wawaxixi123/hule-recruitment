@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Briefcase, Users, Calendar, Zap,
   BarChart3, Settings, Brain, ChevronLeft, ChevronRight,
   Bell, Search, LogOut, ChevronDown, Menu, Sparkles, BookOpen, MessageSquare,
-  ShieldCheck, Radar, Mail, Video, Coins, FileSearch
+  ShieldCheck, Radar, Mail, Video, Coins, FileSearch, BotMessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -44,6 +44,7 @@ const navItems: NavItem[] = [
     children: [
       { icon: Radar, label: "主动获取简历", path: "/sourcing" },
       { icon: Mail, label: "邮箱简历导入", path: "/email-import" },
+      { icon: BotMessageSquare, label: "BOSS 机器人 RPA", path: "/boss-rpa" },
     ],
   },
   { icon: Users, label: "候选人", path: "/candidates" },

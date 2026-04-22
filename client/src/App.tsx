@@ -26,6 +26,7 @@ import SourcingPage from "./pages/SourcingPage";
 import EmailImportPage from "./pages/EmailImportPage";
 import VideoRecordPage from "./pages/VideoRecordPage";
 import FeishuRecordPage from "./pages/FeishuRecordPage";
+import BossRpaPage from "./pages/BossRpaPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import { FeishuProvider } from "./contexts/FeishuContext";
 
@@ -54,6 +55,7 @@ function Router() {
       <Route path="/email-import" component={EmailImportPage} />
       <Route path="/video-record" component={VideoRecordPage} />
       <Route path="/feishu-record" component={FeishuRecordPage} />
+      <Route path="/boss-rpa" component={BossRpaPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
